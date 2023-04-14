@@ -1,4 +1,4 @@
-module github.com/dronestock/todo
+module github.com/dronestock/ssl
 
 go 1.19
 

@@ -9,29 +9,46 @@ import (
 type plugin struct {
 	drone.Base
 
-	// TODO 配置项，可以使用结构体
-	// 如何配置选项请参数：https://github.com/dronestock/drone
-	Todo string `default:"${TODO=默认值}" validate:"required"`
+	// 执行程序
+	Binary string `default:"${BINARY=acme.sh}"`
+	// 证书
+	Certificate *certificate `default:"${CERTIFICATE}" validate:"required_without=Certificates"`
+	// 证书列表
+	Certificates []*certificate `default:"${CERTIFICATES}" validate:"required_without=Certificate"`
+
+	// 别名
+	aliases map[string]string
 }
 
 func newPlugin() drone.Plugin {
-	return new(plugin)
+	return &plugin{
+		aliases: map[string]string{
+			"aliyun": "ali",
+		},
+	}
 }
 
 func (p *plugin) Config() drone.Config {
 	return p
 }
 
-// Steps TODO 返回所有要执行步骤
+func (p *plugin) Setup() (err error) {
+	if nil != p.Certificate {
+		p.Certificates = append(p.Certificates, p.Certificate)
+	}
+
+	return
+}
+
 func (p *plugin) Steps() drone.Steps {
 	return drone.Steps{
-		drone.NewStep(p.todo, drone.Name(`启动守护进程`)),
+		drone.NewStep(newStepCertificate(p)).Name("证书").Build(),
+		drone.NewStep(newStepChuangcache(p)).Name("创世云").Build(),
 	}
 }
 
-// Fields TODO 这儿返回所有的参数，上层在执行步骤时，会将参数在日志中打印
 func (p *plugin) Fields() gox.Fields[any] {
 	return gox.Fields[any]{
-		field.New("todo", p.Todo),
+		field.New("certificates", p.Certificates),
 	}
 }

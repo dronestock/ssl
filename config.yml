@@ -1,0 +1,4 @@
+settings:
+  certificate:
+    domain: xx.a.com
+    type: ali
