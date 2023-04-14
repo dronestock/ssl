@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 type certificate struct {
 	// 域名
 	Domain string `json:"domain,omitempty" validate:"required_without=Domains"`
@@ -7,4 +9,9 @@ type certificate struct {
 	Domains []string `json:"domains,omitempty" validate:"required_without=Domain,dive,domain"`
 	// 类型
 	Type string `json:"type,omitempty" validate:"required,oneof=ali"`
+	// 超时时间
+	Timeout time.Duration `default:"60s" json:"timeout,omitempty"`
+
+	// 用于内部使用，确定一个证书的后续操作标识
+	id string
 }
