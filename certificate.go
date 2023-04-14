@@ -10,7 +10,7 @@ type certificate struct {
 	// 类型
 	Type string `json:"type,omitempty" validate:"required,oneof=ali"`
 	// 超时时间
-	Timeout time.Duration `default:"60s" json:"timeout,omitempty"`
+	Timeout time.Duration `default:"15s" json:"timeout,omitempty"`
 
 	// 用于内部使用，确定一个证书的后续操作标识
 	id string
