@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
-	"path/filepath"
 	"sync"
 
 	"github.com/goexl/gox/args"
 	"github.com/goexl/gox/field"
+	"github.com/goexl/gox/rand"
 )
 
 type stepCertificate struct {
@@ -36,6 +36,10 @@ func (sc *stepCertificate) Run(ctx context.Context) (err error) {
 func (sc *stepCertificate) run(ctx context.Context, certificate *certificate, wg *sync.WaitGroup, err *error) {
 	wg.Add(1)
 	defer wg.Done()
+
+	// 清理证书生成中间的过程文件
+	certificate.id = rand.New().String().Build().Generate()
+	sc.Cleanup().File(certificate.id).Build()
 
 	if "" != certificate.Domain {
 		certificate.Domains = append(certificate.Domains, certificate.Domain)
@@ -74,9 +78,9 @@ func (sc *stepCertificate) install(ctx context.Context, certificate *certificate
 	for _, domain := range certificate.Domains {
 		ia.Option("domain", domain)
 	}
-	ia.Option("certpath", filepath.Join(certificate.id, "cert.pem"))
-	ia.Option("key-file", filepath.Join(certificate.id, "privkey.pem"))
-	ia.Option("fullchain-file", filepath.Join(certificate.id, "fullchain.pem"))
+	ia.Option("certpath", certificate.cert())
+	ia.Option("key-file", certificate.key())
+	ia.Option("fullchain-file", certificate.chain())
 	if _, err = sc.Command(sc.Binary).Args(ia.Build()).Build().Exec(); nil != err {
 		sc.Error("安装证书出错", field.New("certificate", certificate), field.Error(err))
 	}

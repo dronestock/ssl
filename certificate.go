@@ -1,6 +1,9 @@
 package main
 
-import "time"
+import (
+	"path/filepath"
+	"time"
+)
 
 type certificate struct {
 	// 域名
@@ -14,4 +17,16 @@ type certificate struct {
 
 	// 用于内部使用，确定一个证书的后续操作标识
 	id string
+}
+
+func (c *certificate) cert() string {
+	return filepath.Join(c.id, "cert.pem")
+}
+
+func (c *certificate) key() string {
+	return filepath.Join(c.id, "key.pem")
+}
+
+func (c *certificate) chain() string {
+	return filepath.Join(c.id, "chain.pem")
 }
