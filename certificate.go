@@ -18,6 +18,10 @@ type certificate struct {
 	id string
 }
 
+func (c *certificate) match(domain *domain) (matched bool) {
+	return
+}
+
 func (c *certificate) cert() string {
 	return filepath.Join(c.id, "cert.pem")
 }
