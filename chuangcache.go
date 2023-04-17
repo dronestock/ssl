@@ -38,7 +38,34 @@ func (c *chuangcache) upload(ctx context.Context, base *drone.Base, certificate 
 	return
 }
 
-func (c *chuangcache) bind(ctx context.Context, base *drone.Base, certificate *certificate) (domains []*domain, err error) {
+func (c *chuangcache) binds(
+	ctx context.Context, base *drone.Base,
+	certificate *certificate,id string,domain *domain,
+	) ( err error) {
+	return
+}
+
+func (c *chuangcache) bind(
+	ctx context.Context, base *drone.Base,
+	certificate *certificate,id string,domains []*domain,
+	) ( err error) {
+	req := new(chuangcacheReq)
+	rsp := new(chuangcacheRsp[[]*chuangcacheDomain])
+	url := fmt.Sprintf("%s/%s", chuangcacheApiEndpoint, "domain/domainList")
+	if _token, te := c.getToken(ctx, base); nil != te {
+		err = te
+	} else if ce := c.call(ctx, base, url, req.token(_token), rsp); nil != ce {
+		err = ce
+	} else {
+		domains = make([]*domain, 0, 1)
+		for _, cd := range rsp.Data {
+			_domain := new(domain)
+			_domain.id = cd.Id
+			_domain.name = cd.Name
+			domains = append(domains, gox.If(certificate.match(_domain), _domain))
+		}
+	}
+
 	return
 }
 
