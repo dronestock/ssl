@@ -1,5 +1,7 @@
 package main
 
+var _ loader = (*chuangcacheUploadReq)(nil)
+
 type (
 	chuangcacheUploadReq struct {
 		*chuangcacheReq
@@ -13,3 +15,13 @@ type (
 		Id string `json:"ssl_key,omitempty"`
 	}
 )
+
+func (cur *chuangcacheUploadReq) cert(cert string) {
+	cur.Certificate = cert
+}
+
+func (cur *chuangcacheUploadReq) key(key string) {
+	cur.Key = key
+}
+
+func (cur *chuangcacheUploadReq) chain(_ string) {}

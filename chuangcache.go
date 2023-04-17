@@ -25,7 +25,9 @@ func (c *chuangcache) upload(ctx context.Context, base *drone.Base, certificate 
 	req := new(chuangcacheUploadReq)
 	rsp := new(chuangcacheRsp[*chuangcacheUploadRsp])
 	url := fmt.Sprintf("%s/%s", chuangcacheApiEndpoint, "domain/domainList")
-	if _token, te := c.getToken(ctx, base); nil != te {
+	if le := certificate.load(req); nil != le {
+		err = le
+	} else if _token, te := c.getToken(ctx, base); nil != te {
 		err = te
 	} else if ce := c.call(ctx, base, url, req.token(_token), rsp); nil != ce {
 		err = ce

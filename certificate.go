@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
 )
 
@@ -19,6 +20,28 @@ type certificate struct {
 }
 
 func (c *certificate) match(domain *domain) (matched bool) {
+	return
+}
+
+func (c *certificate) load(loader loader) (err error) {
+	if ce := c.set(c.cert(), loader.cert); nil != ce {
+		err = ce
+	} else if ke := c.set(c.key(), loader.key); nil != ke {
+		err = ke
+	} else if fe := c.set(c.chain(), loader.chain); nil != fe {
+		err = fe
+	}
+
+	return
+}
+
+func (c *certificate) set(path string, setter setter) (err error) {
+	if bytes, re := os.ReadFile(path); nil != re {
+		err = re
+	} else {
+		setter(string(bytes))
+	}
+
 	return
 }
 
