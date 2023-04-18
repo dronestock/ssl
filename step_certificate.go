@@ -28,8 +28,8 @@ func (sc *stepCertificate) Runnable() bool {
 func (sc *stepCertificate) Run(ctx context.Context) (err error) {
 	wg := new(sync.WaitGroup)
 	wg.Add(len(sc.Certificates))
-	for _, certificate := range sc.Certificates {
-		go sc.run(ctx, certificate, wg, &err)
+	for _, _certificate := range sc.Certificates {
+		go sc.run(ctx, _certificate, wg, &err)
 	}
 	wg.Wait()
 

@@ -30,19 +30,21 @@ clone:
 
 
 environment:
-  NAME: maven
-  OUTPUT_LINUX: maven.amd64.lin
-  OUTPUT_WINDOWS: maven.amd64.exe
-  OUTPUT_MAC: maven.amd64.mac
+  NAME: ssl
+  OUTPUT_LINUX: ssl.amd64.lin
+  OUTPUT_WINDOWS: ssl.amd64.exe
+  OUTPUT_MAC: ssl.amd64.mac
   CHANGELOG_TAG_OUTPUT: CHANGELOG.tag.md
 
 
 steps:
   - name: 取码
     image: ccr.ccs.tencentyun.com/dronestock/git
+    pull: always
 
   - name: 编译
     image: ccr.ccs.tencentyun.com/pangum/drone
+    pull: always
     volumes:
       - name: go
         path: /var/lib/go
@@ -63,6 +65,7 @@ steps:
 
   - name: 推送
     image: ccr.ccs.tencentyun.com/dronestock/docker
+    pull: always
     privileged: true
     volumes:
       - name: docker
@@ -84,6 +87,7 @@ steps:
 
   - name: 改变
     image: ccr.ccs.tencentyun.com/dronestock/changelog
+    pull: always
     when:
       event:
         - tag
@@ -93,6 +97,7 @@ steps:
 
   - name: 发布
     image: ccr.ccs.tencentyun.com/dronestock/github
+    pull: always
     when:
       event:
         - tag

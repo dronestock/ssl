@@ -7,6 +7,10 @@ import (
 )
 
 type certificate struct {
+	Manufacturer
+
+	// 标题
+	Title string `json:"title,omitempty" validate:"required"`
 	// 域名
 	Domain string `json:"domain,omitempty" validate:"required_without=Domains"`
 	// 域名列表
@@ -21,6 +25,9 @@ type certificate struct {
 }
 
 func (c *certificate) match(domain *domain) (matched bool) {
+	if "" != c.Domain {
+		c.Domains = append(c.Domains, c.Domain)
+	}
 	for _, _domain := range c.Domains {
 		if domain.name == _domain {
 			matched = true
@@ -50,12 +57,10 @@ func (c *certificate) load(loader loader) (err error) {
 
 func (c *certificate) set(path string, setter setter) (err error) {
 	if bytes, re := os.ReadFile(path); nil != re {
-		// err = re
+		err = re
 	} else {
 		setter(string(bytes))
 	}
-	// TODO
-	setter("")
 
 	return
 }

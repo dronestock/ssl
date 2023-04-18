@@ -9,6 +9,7 @@ import (
 	"github.com/goexl/exc"
 	"github.com/goexl/gox"
 	"github.com/goexl/gox/field"
+	"github.com/goexl/gox/rand"
 )
 
 type chuangcache struct {
@@ -18,27 +19,29 @@ type chuangcache struct {
 	token *token
 }
 
-func (c *chuangcache) refresh(ctx context.Context, base *drone.Base, certificate *certificate) (err error) {
+func (c *chuangcache) refresh(ctx context.Context, base drone.Base, certificate *certificate) (err error) {
 	if id, ue := c.upload(ctx, base, certificate); nil != ue {
 		err = ue
-	} else if domains, me := c.match(ctx, base, certificate); nil != me {
+	} else if domains, me := c.domains(ctx, base); nil != me {
 		err = me
-	} else if be := c.binds(ctx, base, id, domains); nil != be {
+	} else if be := c.binds(ctx, base, certificate, id, domains); nil != be {
 		err = be
+	} else if ce := c.cleanup(ctx, base); nil != ce {
+		err = ce
 	}
 
 	return
 }
 
-func (c *chuangcache) upload(ctx context.Context, base *drone.Base, certificate *certificate) (id string, err error) {
+func (c *chuangcache) upload(ctx context.Context, base drone.Base, certificate *certificate) (id string, err error) {
 	req := new(chuangcacheUploadReq)
+	// ! 为避免证书名字重复，在证书名字上加上随机字符串
+	req.Title = gox.StringBuilder(certificate.Title, rand.New().String().Build().Generate()).String()
 	rsp := new(chuangcacheRsp[*chuangcacheUploadRsp])
-	url := fmt.Sprintf("%s/%s", chuangcacheApiEndpoint, "domain/domainList")
+	url := fmt.Sprintf("%s/%s", chuangcacheApiEndpoint, "config/addCertificate")
 	if le := certificate.load(req); nil != le {
 		err = le
-	} else if _token, te := c.getToken(ctx, base); nil != te {
-		err = te
-	} else if ce := c.send(ctx, base, url, req.token(_token), rsp); nil != ce {
+	} else if ce := c.call(ctx, base, url, req, rsp); nil != ce {
 		err = ce
 	} else {
 		id = rsp.Data.Id
@@ -48,54 +51,91 @@ func (c *chuangcache) upload(ctx context.Context, base *drone.Base, certificate 
 }
 
 func (c *chuangcache) binds(
-	ctx context.Context, base *drone.Base,
-	id string, domains []*domain,
+	ctx context.Context, base drone.Base,
+	certificate *certificate,
+	id string, domains []*chuangcacheDomain,
 ) (err error) {
-	for _, _domain := range domains {
-		err = c.bind(ctx, base, id, _domain)
-	}
-
-	return
-}
-
-func (c *chuangcache) bind(
-	ctx context.Context, base *drone.Base,
-	id string, domain *domain,
-) (err error) {
-	req := new(chuangcacheBindReq)
-	req.Id = id
-	req.Domain = domain.id
-	rsp := new(chuangcacheRsp[bool])
-	url := fmt.Sprintf("%s/%s", chuangcacheApiEndpoint, "domain/domainList")
-	if ce := c.call(ctx, base, url, req, rsp); nil != ce {
-		err = ce
-	} else if !rsp.Data {
-		err = exc.NewFields("绑定失败", field.New("req", req), field.New("rsp", rsp))
-	}
-
-	return
-}
-
-func (c *chuangcache) match(ctx context.Context, base *drone.Base, certificate *certificate) (domains []*domain, err error) {
-	req := new(chuangcacheReq)
-	rsp := new(chuangcacheRsp[[]*chuangcacheDomain])
-	url := fmt.Sprintf("%s/%s", chuangcacheApiEndpoint, "domain/domainList")
-	if ce := c.call(ctx, base, url, req, rsp); nil != ce {
-		err = ce
-	} else {
-		domains = make([]*domain, 0, 1)
-		for _, cd := range rsp.Data {
-			_domain := new(domain)
-			_domain.id = cd.Id
-			_domain.name = cd.Name
-			domains = append(domains, gox.If(certificate.match(_domain), _domain))
+	for _, cd := range domains {
+		_domain := new(domain)
+		_domain.id = cd.Id
+		_domain.name = cd.Name
+		if certificate.match(_domain) {
+			err = c.bind(ctx, base, id, _domain)
 		}
 	}
 
 	return
 }
 
-func (c *chuangcache) call(ctx context.Context, base *drone.Base, url string, req tokener, rsp any) (err error) {
+func (c *chuangcache) bind(
+	ctx context.Context, base drone.Base,
+	id string, domain *domain,
+) (err error) {
+	req := new(chuangcacheBindReq)
+	req.Id = id
+	req.Domain = domain.id
+	rsp := new(chuangcacheRsp[bool])
+	url := fmt.Sprintf("%s/%s", chuangcacheApiEndpoint, "config/bindDomainCertificate")
+	if ce := c.call(ctx, base, url, req, rsp); nil != ce {
+		err = ce
+	} else if !rsp.Data {
+		err = exc.NewFields("绑定证书失败", field.New("req", req), field.New("rsp", rsp))
+	}
+
+	return
+}
+
+func (c *chuangcache) domains(ctx context.Context, base drone.Base) (domains []*chuangcacheDomain, err error) {
+	req := new(chuangcacheReq)
+	rsp := new(chuangcacheRsp[[]*chuangcacheDomain])
+	url := fmt.Sprintf("%s/%s", chuangcacheApiEndpoint, "domain/domainList")
+	if ce := c.call(ctx, base, url, req, rsp); nil != ce {
+		err = ce
+	} else {
+		domains = rsp.Data
+	}
+
+	return
+}
+
+func (c *chuangcache) cleanup(ctx context.Context, base drone.Base) (err error) {
+	req := new(chuangcacheReq)
+	rsp := new(chuangcacheRsp[[]*chuangcacheListRsp])
+	url := fmt.Sprintf("%s/%s", chuangcacheApiEndpoint, "config/getCertificateList")
+	if ce := c.call(ctx, base, url, req, rsp); nil != ce {
+		err = ce
+	} else {
+		err = c.deletes(ctx, base, rsp.Data)
+	}
+
+	return
+}
+
+func (c *chuangcache) deletes(ctx context.Context, base drone.Base, certificates []*chuangcacheListRsp) (err error) {
+	for _, _certificate := range certificates {
+		if "" == _certificate.Domain {
+			err = c.delete(ctx, base, _certificate.Id)
+		}
+	}
+
+	return
+}
+
+func (c *chuangcache) delete(ctx context.Context, base drone.Base, id string) (err error) {
+	req := new(chuangcacheDeleteReq)
+	req.Id = id
+	rsp := new(chuangcacheRsp[bool])
+	url := fmt.Sprintf("%s/%s", chuangcacheApiEndpoint, "config/deleteCertificate")
+	if ce := c.call(ctx, base, url, req, rsp); nil != ce {
+		err = ce
+	} else if !rsp.Data {
+		err = exc.NewFields("删除证书失败", field.New("req", req), field.New("rsp", rsp))
+	}
+
+	return
+}
+
+func (c *chuangcache) call(ctx context.Context, base drone.Base, url string, req tokenSetter, rsp statusCoder) (err error) {
 	if _token, te := c.getToken(ctx, base); nil != te {
 		err = te
 	} else if ce := c.send(ctx, base, url, req.token(_token), rsp); nil != ce {
@@ -105,7 +145,7 @@ func (c *chuangcache) call(ctx context.Context, base *drone.Base, url string, re
 	return
 }
 
-func (c *chuangcache) getToken(ctx context.Context, base *drone.Base) (_token string, err error) {
+func (c *chuangcache) getToken(ctx context.Context, base drone.Base) (_token string, err error) {
 	if nil != c.token && c.token.validate() {
 		_token = c.token.token
 	}
@@ -129,13 +169,15 @@ func (c *chuangcache) getToken(ctx context.Context, base *drone.Base) (_token st
 	return
 }
 
-func (c *chuangcache) send(ctx context.Context, base *drone.Base, url string, req any, rsp any) (err error) {
+func (c *chuangcache) send(ctx context.Context, base drone.Base, url string, req any, rsp statusCoder) (err error) {
 	if hr, pe := base.Http().SetContext(ctx).SetBody(req).SetResult(rsp).Post(url); nil != pe {
 		err = pe
 	} else if hr.IsError() {
 		base.Warn("创世云返回错误", field.New("status.code", hr.StatusCode()))
-	} else {
-		// TODO
+	} else if chuangcacheStatusOk != rsp.code() {
+		status := field.New("status", rsp.code())
+		info := field.New("info", rsp.message())
+		err = exc.NewException(rsp.code(), "创世云操作失败", status, info)
 	}
 
 	return

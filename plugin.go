@@ -10,6 +10,7 @@ import (
 
 type plugin struct {
 	drone.Base
+	Manufacturer
 
 	// 执行程序
 	Binary string `default:"${BINARY=acme.sh}"`

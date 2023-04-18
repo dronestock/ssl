@@ -5,4 +5,5 @@ const (
 	underline = "_"
 
 	chuangcacheApiEndpoint = "https://api.chuangcache.com"
+	chuangcacheStatusOk    = 1
 )
