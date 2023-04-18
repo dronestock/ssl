@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"path"
 	"path/filepath"
 )
 
@@ -20,6 +21,18 @@ type certificate struct {
 }
 
 func (c *certificate) match(domain *domain) (matched bool) {
+	for _, _domain := range c.Domains {
+		if domain.name == _domain {
+			matched = true
+		} else if match, me := path.Match(_domain, domain.name); nil == me {
+			matched = match
+		}
+
+		if matched {
+			break
+		}
+	}
+
 	return
 }
 
@@ -37,10 +50,12 @@ func (c *certificate) load(loader loader) (err error) {
 
 func (c *certificate) set(path string, setter setter) (err error) {
 	if bytes, re := os.ReadFile(path); nil != re {
-		err = re
+		// err = re
 	} else {
 		setter(string(bytes))
 	}
+	// TODO
+	setter("")
 
 	return
 }
