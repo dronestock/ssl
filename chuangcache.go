@@ -17,7 +17,8 @@ type chuangcache struct {
 	Ak string `json:"ak,omitempty"`
 	Sk string `json:"sk,omitempty"`
 
-	token *token
+	token  *token
+	titles map[string]bool
 }
 
 func (c *chuangcache) refresh(ctx context.Context, base drone.Base, certificate *certificate) (err error) {
@@ -46,6 +47,7 @@ func (c *chuangcache) upload(ctx context.Context, base drone.Base, certificate *
 		err = ce
 	} else {
 		id = rsp.Data.Id
+		c.titles[req.Title] = true
 	}
 
 	return
@@ -119,7 +121,7 @@ func (c *chuangcache) deletes(
 	certificates []*chuangcacheCertificate,
 ) (err error) {
 	for _, _certificate := range certificates {
-		if chuangcacheCertificateStatusInuse != _certificate.Status {
+		if _, ok := c.titles[_certificate.Title]; !ok && chuangcacheCertificateStatusInuse != _certificate.Status {
 			err = c.delete(ctx, base, _certificate.Key)
 		}
 	}
