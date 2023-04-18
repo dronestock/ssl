@@ -135,7 +135,10 @@ func (c *chuangcache) delete(ctx context.Context, base drone.Base, id string) (e
 	return
 }
 
-func (c *chuangcache) call(ctx context.Context, base drone.Base, url string, req tokenSetter, rsp statusCoder) (err error) {
+func (c *chuangcache) call(
+	ctx context.Context, base drone.Base,
+	url string, req tokenSetter, rsp statusCoder,
+) (err error) {
 	if _token, te := c.getToken(ctx, base); nil != te {
 		err = te
 	} else if ce := c.send(ctx, base, url, req.token(_token), rsp); nil != ce {
