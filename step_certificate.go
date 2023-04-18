@@ -53,8 +53,6 @@ func (sc *stepCertificate) run(ctx context.Context, certificate *certificate, wg
 	} else if ie := sc.install(ctx, certificate); nil != ie {
 		*err = ie
 	}
-
-	return
 }
 
 func (sc *stepCertificate) make(_ context.Context, certificate *certificate) (err error) {
