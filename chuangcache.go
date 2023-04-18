@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/dronestock/drone"
@@ -99,31 +100,36 @@ func (c *chuangcache) domains(ctx context.Context, base drone.Base) (domains []*
 }
 
 func (c *chuangcache) cleanup(ctx context.Context, base drone.Base) (err error) {
-	req := new(chuangcacheReq)
-	rsp := new(chuangcacheRsp[[]*chuangcacheListRsp])
-	url := fmt.Sprintf("%s/%s", chuangcacheApiEndpoint, "config/getCertificateList")
+	req := new(chuangcacheListReq)
+	req.PageSize = math.MaxInt
+	req.PageNo = 1
+	rsp := new(chuangcacheRsp[*chuangcacheListRsp])
+	url := fmt.Sprintf("%s/%s", chuangcacheApiEndpoint, "v2/certificate/list")
 	if ce := c.call(ctx, base, url, req, rsp); nil != ce {
 		err = ce
 	} else {
-		err = c.deletes(ctx, base, rsp.Data)
+		err = c.deletes(ctx, base, rsp.Data.Certificates)
 	}
 
 	return
 }
 
-func (c *chuangcache) deletes(ctx context.Context, base drone.Base, certificates []*chuangcacheListRsp) (err error) {
+func (c *chuangcache) deletes(
+	ctx context.Context, base drone.Base,
+	certificates []*chuangcacheCertificate,
+) (err error) {
 	for _, _certificate := range certificates {
-		if "" == _certificate.Domain {
-			err = c.delete(ctx, base, _certificate.Id)
+		if chuangcacheCertificateStatusInuse != _certificate.Status {
+			err = c.delete(ctx, base, _certificate.Key)
 		}
 	}
 
 	return
 }
 
-func (c *chuangcache) delete(ctx context.Context, base drone.Base, id string) (err error) {
+func (c *chuangcache) delete(ctx context.Context, base drone.Base, key string) (err error) {
 	req := new(chuangcacheDeleteReq)
-	req.Id = id
+	req.Key = key
 	rsp := new(chuangcacheRsp[bool])
 	url := fmt.Sprintf("%s/%s", chuangcacheApiEndpoint, "config/deleteCertificate")
 	if ce := c.call(ctx, base, url, req, rsp); nil != ce {
