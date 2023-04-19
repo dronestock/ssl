@@ -66,6 +66,9 @@ func (p *plugin) Steps() drone.Steps {
 func (p *plugin) Fields() gox.Fields[any] {
 	return gox.Fields[any]{
 		field.New("certificates", p.Certificates),
+		field.New("manufacturer", p.Manufacturer),
+		field.New("email", p.Email),
+		field.New("environments", p.Environments),
 	}
 }
 

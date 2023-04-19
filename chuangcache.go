@@ -22,14 +22,21 @@ type chuangcache struct {
 }
 
 func (c *chuangcache) refresh(ctx context.Context, base drone.Base, certificate *certificate) (err error) {
+	fields := gox.Fields[any]{
+		field.New("certificate", certificate),
+	}
 	if id, ue := c.upload(ctx, base, certificate); nil != ue {
 		err = ue
+		base.Warn("上传证书出错", fields.Add(field.Error(err))...)
 	} else if domains, me := c.domains(ctx, base); nil != me {
 		err = me
+		base.Warn("获取域名列表出错", fields.Add(field.Error(err))...)
 	} else if be := c.binds(ctx, base, certificate, id, domains); nil != be {
 		err = be
+		base.Warn("绑定域名出错", fields.Add(field.Error(err))...)
 	} else if ce := c.cleanup(ctx, base); nil != ce {
 		err = ce
+		base.Warn("清理证书出错", fields.Add(field.Error(err))...)
 	}
 
 	return
