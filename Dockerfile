@@ -8,7 +8,7 @@ COPY --from=golang /usr/local/go/bin/go /docker/usr/local/go/bin/go
 COPY --from=golang /usr/local/go/pkg /docker/usr/local/go/pkg
 COPY --from=golang /usr/local/go/src /docker/usr/local/go/src
 COPY --from=acme /root/.acme.sh /docker/opt/neilpang/acme
-COPY ssl /docker
+COPY ssl /docker/usr/local/bin/
 
 
 
@@ -24,6 +24,22 @@ LABEL author="storezhang<华寅>" \
 
 # 复制文件
 COPY --from=builder /docker /
+
+
+RUN set -ex \
+    \
+    \
+    \
+    # 增加执行权限
+    && chmod +x /usr/local/bin/ssl \
+    \
+    \
+    \
+    && rm -rf /var/cache/apk/*
+
+
+# 执行命令
+ENTRYPOINT /usr/local/bin/ssl
 
 
 # 配置环境变量
