@@ -1,12 +1,6 @@
-FROM dockerproxy.com/library/golang:1.20.3-alpine AS golang
 FROM dockerproxy.com/neilpang/acme.sh:3.0.5 AS acme
-
-
 FROM ccr.ccs.tencentyun.com/storezhang/alpine:3.17.2 AS builder
 
-COPY --from=golang /usr/local/go/bin/go /docker/usr/local/go/bin/go
-COPY --from=golang /usr/local/go/pkg /docker/usr/local/go/pkg
-COPY --from=golang /usr/local/go/src /docker/usr/local/go/src
 COPY --from=acme /root/.acme.sh /docker/opt/neilpang/acme
 COPY ssl /docker/usr/local/bin/
 
@@ -27,6 +21,13 @@ COPY --from=builder /docker /
 
 
 RUN set -ex \
+    \
+    \
+    \
+    && apk update \
+    \
+    # 安装依赖库 \
+    && apk --no-cache add socat openssl curl \
     \
     \
     \
