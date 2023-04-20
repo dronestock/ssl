@@ -62,7 +62,7 @@ func (sc *stepCertificate) make(_ context.Context, certificate *certificate) (er
 	ma.Flag("log")                        // 生成日志
 	ma.Option("dns", sc.dns(certificate)) // 使用DNS验证验证所有者
 	ma.Option("email", sc.Email)
-	ma.Option("server", "letsencrypt")
+	ma.Option("server", sc.Server)
 	ma.Flag("standalone").Option("httpport", sc.Port.Http)
 	if abs, ae := filepath.Abs(sc.Dir); nil == ae {
 		ma.Option("home", abs)

@@ -27,6 +27,9 @@ type plugin struct {
 	Environments map[string]string `default:"${ENVIRONMENTS}" json:"environments,omitempty"`
 	// 端口
 	Port port `default:"${PORT}"`
+	// 证书服务器
+	// nolint: lll
+	Server string `default:"${SERVER=zerossl}" validate:"oneof=letsencrypt letsencrypt_test buypass buypass_test zerossl sslcom google googletest"`
 
 	// 别名
 	aliases map[string]string
