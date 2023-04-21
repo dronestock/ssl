@@ -43,6 +43,10 @@ func (c *chuangcache) refresh(ctx context.Context, base drone.Base, certificate 
 }
 
 func (c *chuangcache) upload(ctx context.Context, base drone.Base, certificate *certificate) (id string, err error) {
+	if nil == c.titles {
+		c.titles = make(map[string]bool)
+	}
+
 	req := new(chuangcacheUploadReq)
 	// ! 为避免证书名字重复，在证书名字上加上随机字符串
 	req.Title = gox.StringBuilder(certificate.Title, rand.New().String().Build().Generate()).String()
