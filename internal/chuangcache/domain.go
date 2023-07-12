@@ -1,6 +1,6 @@
-package main
+package chuangcache
 
-type chuangcacheDomain struct {
+type Domain struct {
 	Id   string `json:"domain_id"`
 	Name string `json:"domain_name"`
 }

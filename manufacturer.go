@@ -1,5 +1,10 @@
 package main
 
+import (
+	"github.com/dronestock/ssl/internal/config"
+)
+
 type Manufacturer struct {
-	Chuangcache *chuangcache `default:"${CHUANGCACHE}" json:"chuangcache,omitempty"`
+	Chuangcache *config.Chuangcache `default:"${CHUANGCACHE}" json:"chuangcache,omitempty"`
+	Tencent     *config.Tencent     `default:"${TENCENT}" json:"tencent,omitempty"`
 }

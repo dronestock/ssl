@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/dronestock/ssl/internal"
 	"github.com/goexl/gox/args"
 	"github.com/goexl/gox/field"
 	"github.com/goexl/gox/rand"
@@ -36,7 +37,7 @@ func (sc *stepCertificate) Run(ctx context.Context) (err error) {
 	return
 }
 
-func (sc *stepCertificate) run(ctx context.Context, certificate *certificate, wg *sync.WaitGroup, err *error) {
+func (sc *stepCertificate) run(ctx context.Context, certificate *internal.Certificate, wg *sync.WaitGroup, err *error) {
 	defer wg.Done()
 
 	// 统一域名配置
@@ -44,7 +45,7 @@ func (sc *stepCertificate) run(ctx context.Context, certificate *certificate, wg
 		certificate.Domains = append(certificate.Domains, certificate.Domain)
 	}
 	// 清理证书生成中间的过程文件
-	certificate.id = rand.New().String().Build().Generate()
+	certificate.Id = rand.New().String().Build().Generate()
 
 	if me := sc.mkdir(certificate); nil != me {
 		*err = me
@@ -55,12 +56,15 @@ func (sc *stepCertificate) run(ctx context.Context, certificate *certificate, wg
 	}
 }
 
-func (sc *stepCertificate) make(_ context.Context, certificate *certificate) (err error) {
+func (sc *stepCertificate) make(_ context.Context, certificate *internal.Certificate) (err error) {
 	ma := args.New().Build()
-	ma.Flag("force") // 强制生成证书
+	// 强制生成证书
+	ma.Flag("force")
 	ma.Flag("issue")
-	ma.Flag("log")                        // 生成日志
-	ma.Option("dns", sc.dns(certificate)) // 使用DNS验证验证所有者
+	// 生成日志
+	ma.Flag("log")
+	// 使用DNS验证验证所有者
+	ma.Option("dns", sc.dns(certificate))
 	ma.Option("email", sc.Email)
 	ma.Option("server", sc.Server)
 	ma.Flag("standalone").Option("httpport", sc.Port.Http)
@@ -69,7 +73,7 @@ func (sc *stepCertificate) make(_ context.Context, certificate *certificate) (er
 	}
 	// 组装所有域名
 	for _, domain := range certificate.Domains {
-		ma.Option("domain", domain)
+		ma.Option("Domain", domain)
 	}
 
 	command := sc.Command(sc.Binary)
@@ -91,7 +95,7 @@ func (sc *stepCertificate) make(_ context.Context, certificate *certificate) (er
 	return
 }
 
-func (sc *stepCertificate) install(_ context.Context, certificate *certificate) (err error) {
+func (sc *stepCertificate) install(_ context.Context, certificate *internal.Certificate) (err error) {
 	ia := args.New().Build()
 	ia.Flag("installcert")
 	if abs, ae := filepath.Abs(sc.Dir); nil == ae {
@@ -99,11 +103,11 @@ func (sc *stepCertificate) install(_ context.Context, certificate *certificate) 
 	}
 
 	for _, domain := range certificate.Domains {
-		ia.Option("domain", domain)
+		ia.Option("Domain", domain)
 	}
-	ia.Option("certpath", certificate.cert())
-	ia.Option("key-file", certificate.key())
-	ia.Option("fullchain-file", certificate.chain())
+	ia.Option("certpath", certificate.Cert())
+	ia.Option("key-file", certificate.Key())
+	ia.Option("fullchain-file", certificate.Chain())
 	if _, err = sc.Command(sc.Binary).Args(ia.Build()).Build().Exec(); nil != err {
 		sc.Error("安装证书出错", field.New("certificate", certificate), field.Error(err))
 	}
@@ -111,12 +115,12 @@ func (sc *stepCertificate) install(_ context.Context, certificate *certificate) 
 	return
 }
 
-func (sc *stepCertificate) mkdir(certificate *certificate) (err error) {
-	if _, se := os.Stat(certificate.id); nil != se && os.IsNotExist(se) {
-		err = os.MkdirAll(certificate.id, os.ModePerm)
+func (sc *stepCertificate) mkdir(certificate *internal.Certificate) (err error) {
+	if _, se := os.Stat(certificate.Id); nil != se && os.IsNotExist(se) {
+		err = os.MkdirAll(certificate.Id, os.ModePerm)
 	}
 	if nil == err {
-		sc.Cleanup().File(certificate.id).Build()
+		sc.Cleanup().File(certificate.Id).Build()
 	}
 
 	return
