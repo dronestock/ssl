@@ -5,11 +5,11 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/dronestock/ssl"
+	"github.com/dronestock/ssl/internal/config"
 )
 
 type Certificate struct {
-	main.Manufacturer
+	config.Manufacturer
 
 	// 标题
 	Title string `json:"title,omitempty" validate:"required"`

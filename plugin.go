@@ -5,13 +5,14 @@ import (
 
 	"github.com/dronestock/drone"
 	"github.com/dronestock/ssl/internal"
+	"github.com/dronestock/ssl/internal/config"
 	"github.com/goexl/gox"
 	"github.com/goexl/gox/field"
 )
 
 type plugin struct {
 	drone.Base
-	Manufacturer
+	config.Manufacturer
 
 	// 执行程序
 	Binary string `default:"${BINARY=acme.sh}"`
@@ -27,7 +28,7 @@ type plugin struct {
 	// 环境变量
 	Environments map[string]string `default:"${ENVIRONMENTS}" json:"environments,omitempty"`
 	// 端口
-	Port port `default:"${PORT}"`
+	Port config.Port `default:"${PORT}"`
 	// 证书服务器
 	// nolint: lll
 	Server string `default:"${SERVER=zerossl}" Validate:"oneof=letsencrypt letsencrypt_test buypass buypass_test zerossl sslcom google googletest"`

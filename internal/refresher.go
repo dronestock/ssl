@@ -11,5 +11,9 @@ type Refresher interface {
 
 	Domains(ctx context.Context) (domains []*Domain, err error)
 
+	Certificates(ctx context.Context) (certificates []*ServerCertificate, err error)
+
 	Bind(ctx context.Context, id string, domain *Domain) (err error)
+
+	Delete(ctx context.Context, certificate *ServerCertificate) (err error)
 }

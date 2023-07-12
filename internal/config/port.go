@@ -1,5 +1,5 @@
-package main
+package config
 
-type port struct {
+type Port struct {
 	Http int `default:"${PORT_HTTP=8080}" json:"http,omitempty" Validate:"max=65535"`
 }

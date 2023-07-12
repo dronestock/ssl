@@ -6,11 +6,14 @@ type Domain struct {
 	Type DomainType
 }
 
-func (d *Domain) Tencent() (domain string) {
+func (d *Domain) TencentType() *string {
+	typ := ""
 	switch d.Type {
 	case DomainTypeCdn:
-
+		typ = "cdn"
+	default:
+		typ = "unknown"
 	}
 
-	return
+	return &typ
 }
