@@ -15,6 +15,7 @@ import (
 	cdn "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cdn/v20180606"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
+	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/regions"
 	ssl "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ssl/v20191205"
 )
 
@@ -37,9 +38,9 @@ func NewTencent(config *core.Tencent, logger simaqian.Logger) (tencent *Tencent,
 
 	credential := common.NewCredential(config.Id, config.Key)
 	cp := profile.NewClientProfile()
-	if sc, se := ssl.NewClient(credential, config.Region, cp); nil != se {
+	if sc, se := ssl.NewClient(credential, regions.Chengdu, cp); nil != se {
 		err = se
-	} else if cc, ce := cdn.NewClient(credential, config.Region, cp); nil != ce {
+	} else if cc, ce := cdn.NewClient(credential, regions.Chengdu, cp); nil != ce {
 		err = ce
 	} else {
 		tencent.ssl = sc
@@ -59,6 +60,7 @@ func (t *Tencent) Upload(ctx context.Context, local *core.Certificate) (cert *co
 	} else {
 		cert = new(core.ServerCertificate)
 		cert.Id = *rsp.Response.CertificateId
+		cert.Title = local.Title
 	}
 
 	return

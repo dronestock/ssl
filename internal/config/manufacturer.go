@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"math"
 	"sync"
 	"time"
 
@@ -164,18 +165,36 @@ func (m *Manufacturer) bind(
 		base.Warn("绑定证书失败", fields...)
 	} else {
 		// 检查部署是否完成
-		m.wait(ctx, refresher, record)
+		m.wait(ctx, base, refresher, cert, record)
 		base.Info("绑定证书成功", fields...)
 	}
 
 	return
 }
 
-func (m *Manufacturer) wait(ctx context.Context, refresher feature.Refresher, record *core.Record) {
-	for {
-		if checked, ce := refresher.Check(ctx, record); nil != ce || !checked {
-			time.Sleep(5 * time.Second)
-		} else if checked {
+func (m *Manufacturer) wait(
+	ctx context.Context, base drone.Base,
+	refresher feature.Refresher,
+	cert *core.ServerCertificate,
+	record *core.Record,
+) {
+	checked := false
+
+	for times := 0; times < math.MaxInt; times++ {
+		fields := gox.Fields[any]{
+			field.New("certificate.id", cert.Id),
+			field.New("certificate.title", cert.Title),
+			field.New("times", times+1),
+		}
+		base.Info("检查证书部署开始", fields...)
+		if check, ce := refresher.Check(ctx, record); nil != ce || !check {
+			time.Sleep(10 * time.Second)
+		} else if check {
+			checked = true
+			base.Info("检查证书部署成功", fields...)
+		}
+
+		if checked {
 			break
 		}
 	}
