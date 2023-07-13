@@ -1,10 +1,10 @@
 package chuangcache
 
 import (
-	"github.com/dronestock/ssl/internal"
+	"github.com/dronestock/ssl/internal/core"
 )
 
-var _ internal.TokenSetter = (*BindReq)(nil)
+var _ core.TokenSetter = (*BindReq)(nil)
 
 type BindReq struct {
 	Request
@@ -13,7 +13,7 @@ type BindReq struct {
 	Domain string `json:"domain_id,omitempty"`
 }
 
-func (br *BindReq) Token(token string) (req internal.TokenSetter) {
+func (br *BindReq) Token(token string) (req core.TokenSetter) {
 	br.AccessToken = token
 	req = br
 

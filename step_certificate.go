@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/dronestock/ssl/internal"
+	"github.com/dronestock/ssl/internal/config"
 	"github.com/goexl/gox/args"
 	"github.com/goexl/gox/field"
 	"github.com/goexl/gox/rand"
@@ -37,7 +37,7 @@ func (sc *stepCertificate) Run(ctx context.Context) (err error) {
 	return
 }
 
-func (sc *stepCertificate) run(ctx context.Context, certificate *internal.Certificate, wg *sync.WaitGroup, err *error) {
+func (sc *stepCertificate) run(ctx context.Context, certificate *config.Certificate, wg *sync.WaitGroup, err *error) {
 	defer wg.Done()
 
 	// 统一域名配置
@@ -56,7 +56,7 @@ func (sc *stepCertificate) run(ctx context.Context, certificate *internal.Certif
 	}
 }
 
-func (sc *stepCertificate) make(_ context.Context, certificate *internal.Certificate) (err error) {
+func (sc *stepCertificate) make(_ context.Context, certificate *config.Certificate) (err error) {
 	ma := args.New().Build()
 	// 强制生成证书
 	ma.Flag("force")
@@ -95,7 +95,7 @@ func (sc *stepCertificate) make(_ context.Context, certificate *internal.Certifi
 	return
 }
 
-func (sc *stepCertificate) install(_ context.Context, certificate *internal.Certificate) (err error) {
+func (sc *stepCertificate) install(_ context.Context, certificate *config.Certificate) (err error) {
 	ia := args.New().Build()
 	ia.Flag("installcert")
 	if abs, ae := filepath.Abs(sc.Dir); nil == ae {
@@ -115,7 +115,7 @@ func (sc *stepCertificate) install(_ context.Context, certificate *internal.Cert
 	return
 }
 
-func (sc *stepCertificate) mkdir(certificate *internal.Certificate) (err error) {
+func (sc *stepCertificate) mkdir(certificate *config.Certificate) (err error) {
 	if _, se := os.Stat(certificate.Id); nil != se && os.IsNotExist(se) {
 		err = os.MkdirAll(certificate.Id, os.ModePerm)
 	}

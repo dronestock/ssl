@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/dronestock/drone"
-	"github.com/dronestock/ssl/internal"
 	"github.com/dronestock/ssl/internal/config"
 	"github.com/goexl/gox"
 	"github.com/goexl/gox/field"
@@ -19,9 +18,9 @@ type plugin struct {
 	// 目录
 	Dir string `default:"${DIR=.}"`
 	// 证书
-	Certificate *internal.certificate `default:"${CERTIFICATE}" Validate:"required_without=Certificates"`
+	Certificate *config.Certificate `default:"${CERTIFICATE}" Validate:"required_without=Certificates"`
 	// 证书列表
-	Certificates []*internal.certificate `default:"${CERTIFICATES}" Validate:"required_without=Certificate"`
+	Certificates []*config.Certificate `default:"${CERTIFICATES}" Validate:"required_without=Certificate"`
 
 	// 邮箱
 	Email string `default:"${EMAIL}" Validate:"required,email"`
@@ -52,7 +51,7 @@ func (p *plugin) Config() drone.Config {
 
 func (p *plugin) Setup() (err error) {
 	if nil == p.Certificates {
-		p.Certificates = make([]*internal.certificate, 0, 1)
+		p.Certificates = make([]*config.Certificate, 0, 1)
 	}
 	if nil != p.Certificate {
 		p.Certificates = append(p.Certificates, p.Certificate)
@@ -64,7 +63,7 @@ func (p *plugin) Setup() (err error) {
 func (p *plugin) Steps() drone.Steps {
 	return drone.Steps{
 		drone.NewStep(newStepCertificate(p)).Name("证书").Build(),
-		drone.NewStep(newStepChuangcache(p)).Name("创世云").Build(),
+		drone.NewStep(newStepRefresh(p)).Name("创世云").Build(),
 	}
 }
 
@@ -77,7 +76,7 @@ func (p *plugin) Fields() gox.Fields[any] {
 	}
 }
 
-func (p *plugin) provider(certificate *internal.certificate) (provider string) {
+func (p *plugin) provider(certificate *config.Certificate) (provider string) {
 	if dp, ok := p.aliases[certificate.Type]; ok {
 		provider = dp
 	} else {
@@ -87,10 +86,10 @@ func (p *plugin) provider(certificate *internal.certificate) (provider string) {
 	return
 }
 
-func (p *plugin) dns(certificate *internal.certificate) string {
+func (p *plugin) dns(certificate *config.Certificate) string {
 	return gox.StringBuilder(dns, underline, p.provider(certificate)).String()
 }
 
-func (p *plugin) key(certificate *internal.certificate, key string) string {
+func (p *plugin) key(certificate *config.Certificate, key string) string {
 	return gox.StringBuilder(strings.ToUpper(p.provider(certificate)), underline, key).String()
 }

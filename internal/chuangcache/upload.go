@@ -1,12 +1,12 @@
 package chuangcache
 
 import (
-	"github.com/dronestock/ssl/internal"
+	"github.com/dronestock/ssl/internal/core"
 )
 
 var (
-	_ internal.Loader      = (*UploadReq)(nil)
-	_ internal.TokenSetter = (*UploadReq)(nil)
+	_ core.Loader      = (*UploadReq)(nil)
+	_ core.TokenSetter = (*UploadReq)(nil)
 )
 
 type (
@@ -23,7 +23,7 @@ type (
 	}
 )
 
-func (ur *UploadReq) Token(token string) (req internal.TokenSetter) {
+func (ur *UploadReq) Token(token string) (req core.TokenSetter) {
 	ur.AccessToken = token
 	req = ur
 

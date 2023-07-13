@@ -1,4 +1,4 @@
-package internal
+package core
 
 type Domain struct {
 	Id   string

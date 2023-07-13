@@ -1,10 +1,10 @@
 package chuangcache
 
 import (
-	"github.com/dronestock/ssl/internal"
+	"github.com/dronestock/ssl/internal/core"
 )
 
-var _ internal.TokenSetter = (*ListReq)(nil)
+var _ core.TokenSetter = (*ListReq)(nil)
 
 type (
 	ListReq struct {
@@ -22,7 +22,7 @@ type (
 	}
 )
 
-func (lr *ListReq) Token(token string) (req internal.TokenSetter) {
+func (lr *ListReq) Token(token string) (req core.TokenSetter) {
 	lr.AccessToken = token
 	req = lr
 

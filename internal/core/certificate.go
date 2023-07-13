@@ -1,16 +1,12 @@
-package internal
+package core
 
 import (
 	"os"
 	"path"
 	"path/filepath"
-
-	"github.com/dronestock/ssl/internal/config"
 )
 
 type Certificate struct {
-	config.Manufacturer
-
 	// 标题
 	Title string `json:"title,omitempty" validate:"required"`
 	// 域名
@@ -19,8 +15,6 @@ type Certificate struct {
 	Domains []string `json:"domains,omitempty" validate:"required_without=Domain"`
 	// 类型
 	Type string `default:"dp" json:"type,omitempty"`
-	// 环境变量
-	Environments map[string]string `json:"environments,omitempty"`
 
 	// 用于内部使用，确定一个证书的后续操作标识
 	Id string

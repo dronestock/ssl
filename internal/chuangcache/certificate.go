@@ -1,7 +1,7 @@
 package chuangcache
 
 import (
-	"github.com/dronestock/ssl/internal"
+	"github.com/dronestock/ssl/internal/core"
 )
 
 type Certificate struct {
@@ -10,10 +10,10 @@ type Certificate struct {
 	Status CertificateStatus `json:"Status,omitempty"`
 }
 
-func (c *Certificate) InternalStatus() (status internal.CertificateStatus) {
+func (c *Certificate) InternalStatus() (status core.CertificateStatus) {
 	switch c.Status {
 	case CertificateStatusInuse:
-		status = internal.CertificateStatusInuse
+		status = core.CertificateStatusInuse
 	}
 
 	return

@@ -1,10 +1,10 @@
 package chuangcache
 
 import (
-	"github.com/dronestock/ssl/internal"
+	"github.com/dronestock/ssl/internal/core"
 )
 
-var _ internal.StatusCoder = (*Response[bool])(nil)
+var _ core.StatusCoder = (*Response[bool])(nil)
 
 type Response[T any] struct {
 	// 接口返回码

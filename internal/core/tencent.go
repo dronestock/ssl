@@ -1,4 +1,4 @@
-package config
+package core
 
 type Tencent struct {
 	Id     string `json:"id,omitempty"`

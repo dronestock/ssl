@@ -1,4 +1,4 @@
-package internal
+package core
 
 const (
 	CertificateStatusInuse CertificateStatus = iota + 1

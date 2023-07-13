@@ -1,10 +1,10 @@
-package refresher
+package manufacturer
 
 import (
 	"context"
 
-	"github.com/dronestock/ssl/internal"
-	"github.com/dronestock/ssl/internal/config"
+	"github.com/dronestock/ssl/internal/core"
+	"github.com/dronestock/ssl/internal/feature"
 	"github.com/dronestock/ssl/internal/tencent"
 	"github.com/go-resty/resty/v2"
 	"github.com/goexl/exc"
@@ -15,17 +15,20 @@ import (
 	ssl "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ssl/v20191205"
 )
 
-var _ internal.Refresher = (*Tencent)(nil)
+var (
+	_ feature.Refresher = (*Tencent)(nil)
+	_ feature.Cleaner   = (*Tencent)(nil)
+)
 
 type Tencent struct {
-	config *config.Tencent
+	config *core.Tencent
 
 	http *resty.Client
 	ssl  *ssl.Client
 	cdn  *cdn.Client
 }
 
-func NewTencent(config *config.Tencent) *Tencent {
+func NewTencent(config *core.Tencent) *Tencent {
 	return &Tencent{
 		config: config,
 	}
@@ -43,7 +46,7 @@ func (t *Tencent) Init(_ context.Context) (err error) {
 	return
 }
 
-func (t *Tencent) Upload(ctx context.Context, certificate *internal.Certificate) (id string, err error) {
+func (t *Tencent) Upload(ctx context.Context, certificate *core.Certificate) (id string, err error) {
 	req := new(tencent.UploadReq)
 	req.Alias = common.StringPtr(certificate.Title)
 	if le := certificate.Load(req); nil != le {
@@ -57,7 +60,7 @@ func (t *Tencent) Upload(ctx context.Context, certificate *internal.Certificate)
 	return
 }
 
-func (t *Tencent) Bind(ctx context.Context, id string, domain *internal.Domain) (err error) {
+func (t *Tencent) Bind(ctx context.Context, id string, domain *core.Domain) (err error) {
 	req := new(ssl.DeployCertificateInstanceRequest)
 	req.CertificateId = common.StringPtr(id)
 	req.InstanceIdList = []*string{common.StringPtr(domain.Id)}
@@ -71,8 +74,8 @@ func (t *Tencent) Bind(ctx context.Context, id string, domain *internal.Domain) 
 	return
 }
 
-func (t *Tencent) Domains(ctx context.Context) (domains []*internal.Domain, err error) {
-	domains = make([]*internal.Domain, 0, 1)
+func (t *Tencent) Domains(ctx context.Context) (domains []*core.Domain, err error) {
+	domains = make([]*core.Domain, 0, 1)
 	if ce := t.cdnDomains(ctx, &domains); nil != ce {
 		err = ce
 	}
@@ -80,25 +83,25 @@ func (t *Tencent) Domains(ctx context.Context) (domains []*internal.Domain, err 
 	return
 }
 
-func (t *Tencent) Certificates(ctx context.Context) (certificates []*internal.ServerCertificate, err error) {
+func (t *Tencent) Certificates(ctx context.Context) (certificates []*core.ServerCertificate, err error) {
 	return
 }
 
-func (t *Tencent) Delete(ctx context.Context, certificate *internal.ServerCertificate) (err error) {
+func (t *Tencent) Delete(ctx context.Context, certificate *core.ServerCertificate) (err error) {
 	return
 }
 
-func (t *Tencent) cdnDomains(ctx context.Context, domains *[]*internal.Domain) (err error) {
+func (t *Tencent) cdnDomains(ctx context.Context, domains *[]*core.Domain) (err error) {
 	req := new(cdn.DescribeDomainsRequest)
 	req.Limit = common.Int64Ptr(1000)
 	if rsp, dde := t.cdn.DescribeDomainsWithContext(ctx, req); nil != dde {
 		err = dde
 	} else if 0 != len(rsp.Response.Domains) {
 		for _, brief := range rsp.Response.Domains {
-			domain := new(internal.Domain)
+			domain := new(core.Domain)
 			domain.Id = *brief.ResourceId
 			domain.Name = *brief.Domain
-			domain.Type = internal.DomainTypeCdn
+			domain.Type = core.DomainTypeCdn
 
 			*domains = append(*domains, domain)
 		}

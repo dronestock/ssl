@@ -1,4 +1,4 @@
-package config
+package core
 
 type Chuangcache struct {
 	Ak string `json:"ak,omitempty"`

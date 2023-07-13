@@ -1,4 +1,4 @@
-package internal
+package core
 
 const (
 	DomainTypeCdn DomainType = iota + 1
