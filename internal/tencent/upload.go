@@ -5,19 +5,29 @@ import (
 )
 
 type UploadReq struct {
-	ssl.UploadCertificateRequest
+	request *ssl.UploadCertificateRequest
+}
+
+func NewUploadReq() *UploadReq {
+	return &UploadReq{
+		request: ssl.NewUploadCertificateRequest(),
+	}
 }
 
 func (ur *UploadReq) Request() *ssl.UploadCertificateRequest {
-	return &ur.UploadCertificateRequest
+	return ur.request
 }
 
 func (ur *UploadReq) Cert(cert string) {
-	ur.CertificatePublicKey = &cert
+	ur.request.CertificatePublicKey = &cert
 }
 
 func (ur *UploadReq) Key(key string) {
-	ur.CertificatePrivateKey = &key
+	ur.request.CertificatePrivateKey = &key
 }
 
 func (ur *UploadReq) Chain(_ string) {}
+
+func (ur *UploadReq) Alias(alias string) {
+	ur.request.Alias = &alias
+}

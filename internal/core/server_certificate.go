@@ -1,7 +1,6 @@
 package core
 
 type ServerCertificate struct {
-	Id     string
-	Title  string
-	Status CertificateStatus
+	Id    string
+	Title string
 }

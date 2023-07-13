@@ -7,11 +7,11 @@ import (
 )
 
 type Refresher interface {
-	Init(ctx context.Context) (err error)
-
-	Upload(ctx context.Context, certificate *core.Certificate) (id string, err error)
+	Upload(ctx context.Context, local *core.Certificate) (certificate *core.ServerCertificate, err error)
 
 	Domains(ctx context.Context) (domains []*core.Domain, err error)
 
-	Bind(ctx context.Context, id string, domain *core.Domain) (err error)
+	Bind(ctx context.Context, certificate *core.ServerCertificate, domain *core.Domain) (record *core.Record, err error)
+
+	Check(ctx context.Context, record *core.Record) (checked bool, err error)
 }

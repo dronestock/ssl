@@ -2,6 +2,8 @@ package config
 
 import (
 	"context"
+	"sync"
+	"time"
 
 	"github.com/dronestock/drone"
 	"github.com/dronestock/ssl/internal/core"
@@ -14,22 +16,24 @@ import (
 type Manufacturer struct {
 	Chuangcache *core.Chuangcache `default:"${CHUANGCACHE}" json:"chuangcache,omitempty"`
 	Tencent     *core.Tencent     `default:"${TENCENT}" json:"tencent,omitempty"`
-
-	titles map[string]bool
 }
 
 func (m *Manufacturer) Refresh(ctx context.Context, base drone.Base, certificate *Certificate) (err error) {
-	if nil == m.titles {
-		m.titles = make(map[string]bool)
-	}
-
 	refreshers := make([]feature.Refresher, 0, 1)
 	if nil != m.Chuangcache {
 		refreshers = append(refreshers, manufacturer.NewChuangcache())
 	}
 	if nil != m.Tencent {
-		refreshers = append(refreshers, manufacturer.NewTencent(m.Tencent))
+		if tencent, te := manufacturer.NewTencent(m.Tencent, base.Logger); nil != te {
+			err = te
+		} else {
+			refreshers = append(refreshers, tencent)
+		}
 	}
+	if nil != err {
+		return
+	}
+
 	for _, _refresher := range refreshers {
 		_ = m.refresh(ctx, base, _refresher, certificate)
 	}
@@ -37,14 +41,22 @@ func (m *Manufacturer) Refresh(ctx context.Context, base drone.Base, certificate
 	return
 }
 
-func (m *Manufacturer) Clean(ctx context.Context) (err error) {
+func (m *Manufacturer) Clean(ctx context.Context, base drone.Base) (err error) {
 	cleaners := make([]feature.Cleaner, 0, 1)
 	if nil != m.Chuangcache {
 		cleaners = append(cleaners, manufacturer.NewChuangcache())
 	}
 	if nil != m.Tencent {
-		cleaners = append(cleaners, manufacturer.NewTencent(m.Tencent))
+		if tencent, te := manufacturer.NewTencent(m.Tencent, base.Logger); nil != te {
+			err = te
+		} else {
+			cleaners = append(cleaners, tencent)
+		}
 	}
+	if nil != err {
+		return
+	}
+
 	for _, cleaner := range cleaners {
 		_ = m.cleanup(ctx, cleaner)
 	}
@@ -56,32 +68,46 @@ func (m *Manufacturer) refresh(
 	ctx context.Context,
 	base drone.Base,
 	refresher feature.Refresher,
-	certificate *Certificate,
+	local *Certificate,
 ) (err error) {
-	fields := gox.Fields[any]{
-		field.New("certificate", certificate),
-	}
-	if id, ue := refresher.Upload(ctx, &certificate.Certificate); nil != ue {
+	if certificate, ue := m.upload(ctx, base, refresher, &local.Certificate); nil != ue {
 		err = ue
-		base.Warn("上传证书出错", fields.Add(field.Error(err))...)
 	} else if domains, me := refresher.Domains(ctx); nil != me {
 		err = me
-		base.Warn("获取域名列表出错", fields.Add(field.Error(err))...)
-	} else if be := m.binds(ctx, refresher, certificate, id, domains); nil != be {
+	} else if be := m.binds(ctx, base, refresher, local, certificate, domains); nil != be {
 		err = be
-		base.Warn("绑定域名出错", fields.Add(field.Error(err))...)
-	} else {
-		m.titles[certificate.Title] = true
 	}
 
 	return
 }
 
 func (m *Manufacturer) cleanup(ctx context.Context, cleaner feature.Cleaner) (err error) {
-	if certificates, ce := cleaner.Certificates(ctx); nil != ce {
+	if certificates, ce := cleaner.Invalidates(ctx); nil != ce {
 		err = ce
 	} else {
 		err = m.deletes(ctx, cleaner, certificates)
+	}
+
+	return
+}
+
+func (m *Manufacturer) upload(
+	ctx context.Context,
+	base drone.Base,
+	refresher feature.Refresher,
+	local *core.Certificate,
+) (cert *core.ServerCertificate, err error) {
+	fields := gox.Fields[any]{
+		field.New("title", local.Title),
+		field.New("domains", local.Domains),
+	}
+	base.Debug("证书上传开始", fields...)
+	if certificate, ue := refresher.Upload(ctx, local); nil != ue {
+		err = ue
+		base.Warn("证书上传出错", fields.Add(field.Error(ue))...)
+	} else {
+		cert = certificate
+		base.Info("证书上传成功", fields...)
 	}
 
 	return
@@ -92,9 +118,7 @@ func (m *Manufacturer) deletes(
 	certificates []*core.ServerCertificate,
 ) (err error) {
 	for _, certificate := range certificates {
-		if _, ok := m.titles[certificate.Title]; !ok && core.CertificateStatusInuse != certificate.Status {
-			err = cleaner.Delete(ctx, certificate)
-		}
+		err = m.delete(ctx, cleaner, certificate)
 	}
 
 	return
@@ -102,16 +126,69 @@ func (m *Manufacturer) deletes(
 
 func (m *Manufacturer) binds(
 	ctx context.Context,
+	base drone.Base,
 	refresher feature.Refresher,
-	certificate *Certificate,
-	id string, domains []*core.Domain,
+	local *Certificate,
+	certificate *core.ServerCertificate, domains []*core.Domain,
 ) (err error) {
-	for _, cd := range domains {
-		_domain := new(core.Domain)
-		_domain.Id = cd.Id
-		_domain.Name = cd.Name
-		if certificate.Match(_domain) {
-			err = refresher.Bind(ctx, id, _domain)
+	wg := new(sync.WaitGroup)
+	for _, domain := range domains {
+		if local.Match(domain) {
+			wg.Add(1)
+			go m.bind(ctx, base, wg, refresher, certificate, domain)
+		}
+	}
+	wg.Wait()
+
+	return
+}
+
+func (m *Manufacturer) bind(
+	ctx context.Context,
+	base drone.Base,
+	wg *sync.WaitGroup,
+	refresher feature.Refresher,
+	cert *core.ServerCertificate, domain *core.Domain,
+) {
+	defer wg.Done()
+
+	fields := gox.Fields[any]{
+		field.New("domain.id", domain.Id),
+		field.New("domain.name", domain.Name),
+
+		field.New("certificate.id", cert.Id),
+		field.New("certificate.title", cert.Title),
+	}
+	base.Info("绑定证书开始", fields...)
+	if record, be := refresher.Bind(ctx, cert, domain); nil != be {
+		base.Warn("绑定证书失败", fields...)
+	} else {
+		// 检查部署是否完成
+		m.wait(ctx, refresher, record)
+		base.Info("绑定证书成功", fields...)
+	}
+
+	return
+}
+
+func (m *Manufacturer) wait(ctx context.Context, refresher feature.Refresher, record *core.Record) {
+	for {
+		if checked, ce := refresher.Check(ctx, record); nil != ce || !checked {
+			time.Sleep(5 * time.Second)
+		} else if checked {
+			break
+		}
+	}
+}
+func (m *Manufacturer) delete(ctx context.Context, cleaner feature.Cleaner, cert *core.ServerCertificate) (err error) {
+	total := 15
+	for times := 0; times < total; times++ {
+		if deleted, de := cleaner.Delete(ctx, cert); nil != de && times < total-1 {
+			time.Sleep(3 * time.Second)
+		} else if nil != de {
+			err = de
+		} else if deleted {
+			break
 		}
 	}
 

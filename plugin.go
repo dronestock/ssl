@@ -18,7 +18,7 @@ type plugin struct {
 	// 目录
 	Dir string `default:"${DIR=.}"`
 	// 证书
-	Certificate *config.Certificate `default:"${CERTIFICATE}" Validate:"required_without=Certificates"`
+	Certificate *config.Certificate `default:"${CERTIFICATE}" Validate:"required_without=Invalidates"`
 	// 证书列表
 	Certificates []*config.Certificate `default:"${CERTIFICATES}" Validate:"required_without=Certificate"`
 
@@ -62,8 +62,9 @@ func (p *plugin) Setup() (err error) {
 
 func (p *plugin) Steps() drone.Steps {
 	return drone.Steps{
-		drone.NewStep(newStepCertificate(p)).Name("证书").Build(),
-		drone.NewStep(newStepRefresh(p)).Name("创世云").Build(),
+		// drone.NewStep(newStepCertificate(p)).Name("证书").Build(),
+		drone.NewStep(newStepRefresh(p)).Name("刷新").Build(),
+		drone.NewStep(newStepCleanup(p)).Name("清理").Build(),
 	}
 }
 

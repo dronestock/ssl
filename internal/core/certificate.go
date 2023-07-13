@@ -3,7 +3,6 @@ package core
 import (
 	"os"
 	"path"
-	"path/filepath"
 )
 
 type Certificate struct {
@@ -62,13 +61,16 @@ func (c *Certificate) set(path string, setter Setter) (err error) {
 }
 
 func (c *Certificate) Cert() string {
-	return filepath.Join(c.Id, "cert.pem")
+	// return filepath.Join(c.Id, "cert.pem")
+	return `/home/storezhang/ssl/sources-FV7HTSl41x/COjhoYNA/cert.pem`
 }
 
 func (c *Certificate) Key() string {
-	return filepath.Join(c.Id, "key.pem")
+	// return filepath.Join(c.Id, "key.pem")
+	return `/home/storezhang/ssl/sources-FV7HTSl41x/COjhoYNA/key.pem`
 }
 
 func (c *Certificate) Chain() string {
-	return filepath.Join(c.Id, "chain.pem")
+	// return filepath.Join(c.Id, "chain.pem")
+	return `/home/storezhang/ssl/sources-FV7HTSl41x/COjhoYNA/chain.pem`
 }

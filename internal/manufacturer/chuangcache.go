@@ -34,30 +34,31 @@ func NewChuangcache() *Chuangcache {
 	return &Chuangcache{}
 }
 
-func (c *Chuangcache) Init(_ context.Context) (err error) {
-	return
-}
-
-func (c *Chuangcache) Upload(ctx context.Context, certificate *core.Certificate) (id string, err error) {
+func (c *Chuangcache) Upload(ctx context.Context, local *core.Certificate) (certificate *core.ServerCertificate, err error) {
 	req := new(chuangcache.UploadReq)
 	// ! 为避免证书名字重复，在证书名字上加上随机字符串
-	req.Title = gox.StringBuilder(certificate.Title, rand.New().String().Build().Generate()).String()
+	req.Title = gox.StringBuilder(local.Title, rand.New().String().Build().Generate()).String()
 	rsp := new(chuangcache.Response[*chuangcache.UploadRsp])
 	url := fmt.Sprintf("%s/%s", chuangcache.ApiEndpoint, "config/addCertificate")
-	if le := certificate.Load(req); nil != le {
+	if le := local.Load(req); nil != le {
 		err = le
 	} else if ce := c.call(ctx, url, req, rsp); nil != ce {
 		err = ce
 	} else {
-		id = rsp.Data.Id
+		certificate = new(core.ServerCertificate)
+		certificate.Id = rsp.Data.Id
 	}
 
 	return
 }
 
-func (c *Chuangcache) Bind(ctx context.Context, id string, domain *core.Domain) (err error) {
+func (c *Chuangcache) Bind(
+	ctx context.Context,
+	certificate *core.ServerCertificate,
+	domain *core.Domain,
+) (record *core.Record, err error) {
 	req := new(chuangcache.BindReq)
-	req.Id = id
+	req.Id = certificate.Id
 	req.Domain = domain.Id
 	rsp := new(chuangcache.Response[bool])
 	url := fmt.Sprintf("%s/%s", chuangcache.ApiEndpoint, "config/bindDomainCertificate")
@@ -65,8 +66,15 @@ func (c *Chuangcache) Bind(ctx context.Context, id string, domain *core.Domain) 
 		err = ce
 	} else if !rsp.Data {
 		err = exc.NewFields("绑定证书失败", field.New("req", req), field.New("rsp", rsp))
+	} else {
+		record = new(core.Record)
+		record.Id = rsp.Info
 	}
 
+	return
+}
+
+func (c *Chuangcache) Check(ctx context.Context, record *core.Record) (checked bool, err error) {
 	return
 }
 
@@ -90,28 +98,7 @@ func (c *Chuangcache) Domains(ctx context.Context) (domains []*core.Domain, err 
 	return
 }
 
-func (c *Chuangcache) Certificates(ctx context.Context) (certificates []*core.ServerCertificate, err error) {
-	certificates = make([]*core.ServerCertificate, 0, 1)
-	err = c.certificates(ctx, &certificates)
-
-	return
-}
-
-func (c *Chuangcache) Delete(ctx context.Context, certificate *core.ServerCertificate) (err error) {
-	req := new(chuangcache.DeleteReq)
-	req.Key = certificate.Id
-	rsp := new(chuangcache.Response[bool])
-	url := fmt.Sprintf("%s/%s", chuangcache.ApiEndpoint, "config/deleteCertificate")
-	if ce := c.call(ctx, url, req, rsp); nil != ce {
-		err = ce
-	} else if !rsp.Data {
-		err = exc.NewFields("删除证书失败", field.New("req", req), field.New("rsp", rsp))
-	}
-
-	return
-}
-
-func (c *Chuangcache) certificates(ctx context.Context, certificates *[]*core.ServerCertificate) (err error) {
+func (c *Chuangcache) Invalidates(ctx context.Context) (certificates []*core.ServerCertificate, err error) {
 	req := new(chuangcache.ListReq)
 	req.PageSize = math.MaxInt
 	req.PageNo = 1
@@ -120,14 +107,29 @@ func (c *Chuangcache) certificates(ctx context.Context, certificates *[]*core.Se
 	if ce := c.call(ctx, url, req, rsp); nil != ce {
 		err = ce
 	} else if 0 != len(rsp.Data.Certificates) {
-		for _, certificate := range rsp.Data.Certificates {
-			sc := new(core.ServerCertificate)
-			sc.Id = certificate.Key
-			sc.Title = certificate.Title
-			sc.Status = certificate.InternalStatus()
+		for _, _certificate := range rsp.Data.Certificates {
+			if chuangcache.CertificateStatusInuse != _certificate.Status {
+				certificate := new(core.ServerCertificate)
+				certificate.Id = _certificate.Key
+				certificate.Title = _certificate.Title
 
-			*certificates = append(*certificates, sc)
+				certificates = append(certificates, certificate)
+			}
 		}
+	}
+
+	return
+}
+
+func (c *Chuangcache) Delete(ctx context.Context, certificate *core.ServerCertificate) (deleted bool, err error) {
+	req := new(chuangcache.DeleteReq)
+	req.Key = certificate.Id
+	rsp := new(chuangcache.Response[bool])
+	url := fmt.Sprintf("%s/%s", chuangcache.ApiEndpoint, "config/deleteCertificate")
+	if ce := c.call(ctx, url, req, rsp); nil != ce {
+		err = ce
+	} else if !rsp.Data {
+		err = exc.NewFields("删除证书失败", field.New("req", req), field.New("rsp", rsp))
 	}
 
 	return
