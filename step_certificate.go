@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/dronestock/ssl/internal/config"
@@ -44,6 +45,18 @@ func (c *stepCertificate) run(ctx context.Context, certificate *config.Certifica
 	if "" != certificate.Domain {
 		certificate.Domains = append(certificate.Domains, certificate.Domain)
 	}
+	// 加入顶级域名
+	self := ""
+	for _, domain := range certificate.Domains {
+		domains := strings.Split(domain, dot)
+		length := len(domains)
+		self = strings.Join(domains[length-2:length], dot)
+		if "" != self && self != domain {
+			break
+		}
+	}
+	certificate.Domains = append(certificate.Domains, self)
+
 	// 清理证书生成中间的过程文件
 	certificate.Id = rand.New().String().Build().Generate()
 

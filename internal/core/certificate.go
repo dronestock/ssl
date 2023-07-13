@@ -20,14 +20,14 @@ type Certificate struct {
 	Id string
 }
 
-func (c *Certificate) Match(domain *Domain) (matched bool) {
+func (c *Certificate) Match(check *Domain) (matched bool) {
 	if "" != c.Domain {
 		c.Domains = append(c.Domains, c.Domain)
 	}
-	for _, _domain := range c.Domains {
-		if domain.Name == _domain {
+	for _, domain := range c.Domains {
+		if check.Name == domain {
 			matched = true
-		} else if match, me := path.Match(_domain, domain.Name); nil == me {
+		} else if match, me := path.Match(domain, check.Name); nil == me {
 			matched = match
 		}
 

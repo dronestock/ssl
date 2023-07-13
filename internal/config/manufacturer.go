@@ -35,8 +35,15 @@ func (m *Manufacturer) Refresh(ctx context.Context, base drone.Base, certificate
 		return
 	}
 
+	total := len(refreshers)
 	for _, _refresher := range refreshers {
-		_ = m.refresh(ctx, base, _refresher, certificate)
+		if re := m.refresh(ctx, base, _refresher, certificate); nil != re {
+			err = re
+			total++
+		}
+	}
+	if 0 == total {
+		err = nil
 	}
 
 	return

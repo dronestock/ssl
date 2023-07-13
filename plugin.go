@@ -30,7 +30,7 @@ type plugin struct {
 	Port config.Port `default:"${PORT}"`
 	// 证书服务器
 	// nolint: lll
-	Server string `default:"${SERVER=zerossl}" Validate:"oneof=letsencrypt letsencrypt_test buypass buypass_test zerossl sslcom google googletest"`
+	Server string `default:"${SERVER=buypass}" Validate:"oneof=letsencrypt letsencrypt_test buypass buypass_test zerossl sslcom google googletest"`
 
 	// 别名
 	aliases map[string]string
@@ -62,7 +62,7 @@ func (p *plugin) Setup() (err error) {
 
 func (p *plugin) Steps() drone.Steps {
 	return drone.Steps{
-		// drone.NewStep(newStepCertificate(p)).Name("证书").Build(),
+		drone.NewStep(newStepCertificate(p)).Name("证书").Build(),
 		drone.NewStep(newStepRefresh(p)).Name("刷新").Build(),
 		drone.NewStep(newStepCleanup(p)).Name("清理").Build(),
 	}
