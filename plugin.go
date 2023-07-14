@@ -26,11 +26,9 @@ type plugin struct {
 	Email string `default:"${EMAIL}" Validate:"required,email"`
 	// 环境变量
 	Environments map[string]string `default:"${ENVIRONMENTS}" json:"environments,omitempty"`
-	// 端口
-	Port config.Port `default:"${PORT}"`
 	// 证书服务器
 	// nolint: lll
-	Server string `default:"${SERVER=buypass}" Validate:"oneof=letsencrypt letsencrypt_test buypass buypass_test zerossl sslcom google googletest"`
+	Server string `default:"${SERVER=zerossl}" Validate:"oneof=letsencrypt letsencrypt_test buypass buypass_test zerossl sslcom google googletest"`
 
 	// 别名
 	aliases map[string]string

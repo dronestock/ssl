@@ -60,10 +60,10 @@ func (c *stepCertificate) run(ctx context.Context, certificate *config.Certifica
 	// 清理证书生成中间的过程文件
 	certificate.Id = rand.New().String().Build().Generate()
 
-	if me := c.mkdir(certificate); nil != me {
-		*err = me
-	} else if me := c.make(ctx, certificate); nil != me {
-		*err = me
+	if mke := c.mkdir(certificate); nil != mke {
+		*err = mke
+	} else if mae := c.make(ctx, certificate); nil != mae {
+		*err = mae
 	} else if ie := c.install(ctx, certificate); nil != ie {
 		*err = ie
 	}
@@ -80,7 +80,6 @@ func (c *stepCertificate) make(_ context.Context, certificate *config.Certificat
 	ma.Option("dns", c.dns(certificate))
 	ma.Option("email", c.Email)
 	ma.Option("server", c.Server)
-	ma.Flag("standalone").Option("httpport", c.Port.Http)
 	if abs, ae := filepath.Abs(c.Dir); nil == ae {
 		ma.Option("home", abs)
 	}
