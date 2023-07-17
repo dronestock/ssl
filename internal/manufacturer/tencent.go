@@ -2,6 +2,7 @@ package manufacturer
 
 import (
 	"context"
+	"fmt"
 	"math"
 
 	"github.com/dronestock/ssl/internal/core"
@@ -154,7 +155,7 @@ func (t *Tencent) Delete(ctx context.Context, cert *core.ServerCertificate) (del
 
 func (t *Tencent) cdnDomains(ctx context.Context, domains *[]*core.Domain) (err error) {
 	req := cdn.NewDescribeDomainsRequest()
-	req.Limit = common.Int64Ptr(1000)
+	req.Limit = common.Int64Ptr(100)
 	for page := 0; page < math.MaxInt; page++ {
 		req.Offset = common.Int64Ptr(int64(page) * (*req.Limit))
 		if rsp, dde := t.cdn.DescribeDomainsWithContext(ctx, req); nil != dde {
@@ -177,8 +178,30 @@ func (t *Tencent) cdnDomains(ctx context.Context, domains *[]*core.Domain) (err 
 }
 
 func (t *Tencent) apiDomains(ctx context.Context, domains *[]*core.Domain) (err error) {
+	req := api.NewDescribeServicesStatusRequest()
+	req.Limit = common.Int64Ptr(100)
+	for page := 0; page < math.MaxInt; page++ {
+		req.Offset = common.Int64Ptr(int64(page) * (*req.Limit))
+		if rsp, dce := t.api.DescribeServicesStatusWithContext(ctx, req); nil != dce {
+			err = dce
+		} else if 0 == len(rsp.Response.Result.ServiceSet) {
+			break
+		} else {
+			for _, service := range rsp.Response.Result.ServiceSet {
+				if fe := t.fetchApiDomains(ctx, service.ServiceId, domains); nil != fe {
+					t.Warn("获取网关域名出错", field.New("service", service), field.Error(fe))
+				}
+			}
+		}
+	}
+
+	return
+}
+
+func (t *Tencent) fetchApiDomains(ctx context.Context, id *string, domains *[]*core.Domain) (err error) {
 	req := api.NewDescribeServiceSubDomainsRequest()
-	req.Limit = common.Int64Ptr(1000)
+	req.ServiceId = id
+	req.Limit = common.Int64Ptr(100)
 	for page := 0; page < math.MaxInt; page++ {
 		req.Offset = common.Int64Ptr(int64(page) * (*req.Limit))
 		if rsp, dce := t.api.DescribeServiceSubDomainsWithContext(ctx, req); nil != dce {
@@ -189,7 +212,7 @@ func (t *Tencent) apiDomains(ctx context.Context, domains *[]*core.Domain) (err 
 			for _, _domain := range rsp.Response.Result.DomainSet {
 				domain := new(core.Domain)
 				domain.Id = *_domain.DomainName
-				domain.Name = *_domain.DomainName
+				domain.Name = fmt.Sprintf(tencent.GatewayDomainFormatter, *id, *_domain.DomainName)
 				domain.Type = core.DomainTypeGateway
 
 				*domains = append(*domains, domain)

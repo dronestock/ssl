@@ -4,6 +4,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 )
 
 type Certificate struct {
@@ -26,6 +27,8 @@ func (c *Certificate) Match(check *Domain) (matched bool) {
 	}
 	for _, domain := range c.Domains {
 		if check.Name == domain {
+			matched = true
+		} else if check.Name == strings.ReplaceAll(domain, "*.", "") {
 			matched = true
 		} else if match, me := path.Match(domain, check.Name); nil == me {
 			matched = match

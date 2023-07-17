@@ -9,18 +9,41 @@
 ![最佳语言](https://img.shields.io/github/languages/top/dronestock/ssl)
 ![星星个数](https://img.shields.io/github/stars/dronestock/ssl?style=social)
 
-Drone插件模板，要编写Drone插件，可以从此模板开始创建项目
+自动SSL证书，使用方法是在`Drone`里面增加一个`Cron`型的任务，自动更新证书，支持
+- 创世云
+- 腾讯云
+  - CDN
+  - API网关
 
 ## 使用
 
 非常简单，只需要在`.drone.yml`里增加配置
 
 ```yaml
-- name: SSL
+- name: 刷新
   image: ccr.ccs.tencentyun.com/dronestock/ssl
+  pull: always
+  environment:
+    ID_DNSPOD:
+      from_secret: id_dnspod
+    TOKEN_DNSPOD:
+      from_secret: token_dnspod
+    ID_SSL:
+      from_secret: id_ssl
+    KEY_SSL:
+      from_secret: key_ssl
   settings:
-    secret_id: xxx
-    secret_key: xxx
+    email: storezhang@gmail.com
+    certificate:
+      title: IT课
+      domain: '*.itcoursee.com'
+      type: dnspod
+      environments:
+        Id: $${ID_DNSPOD}
+        Key: $${TOKEN_DNSPOD}
+    tencent:
+      id: $${ID_SSL}
+      key: $${KEY_SSL}
 ```
 
 更多使用教程，请参考[文档](https://www.dronestock.tech/plugin/stock/drone)
