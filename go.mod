@@ -8,8 +8,9 @@ require (
 	github.com/goexl/exc v0.0.5
 	github.com/goexl/gox v0.3.6
 	github.com/goexl/simaqian v0.2.5
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/apigateway v1.0.702
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cdn v1.0.700
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.700
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.702
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ssl v1.0.700
 )
 

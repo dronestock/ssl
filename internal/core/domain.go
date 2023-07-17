@@ -11,6 +11,8 @@ func (d *Domain) TencentType() *string {
 	switch d.Type {
 	case DomainTypeCdn:
 		typ = "cdn"
+	case DomainTypeGateway:
+		typ = "apigateway"
 	default:
 		typ = "unknown"
 	}

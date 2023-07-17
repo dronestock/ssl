@@ -12,6 +12,7 @@ import (
 	"github.com/goexl/gox"
 	"github.com/goexl/gox/field"
 	"github.com/goexl/simaqian"
+	api "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/apigateway/v20180808"
 	cdn "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cdn/v20180606"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
@@ -30,6 +31,7 @@ type Tencent struct {
 	http *resty.Client
 	ssl  *ssl.Client
 	cdn  *cdn.Client
+	api  *api.Client
 }
 
 func NewTencent(config *core.Tencent, logger simaqian.Logger) (tencent *Tencent, err error) {
@@ -42,9 +44,12 @@ func NewTencent(config *core.Tencent, logger simaqian.Logger) (tencent *Tencent,
 		err = se
 	} else if cc, ce := cdn.NewClient(credential, regions.Chengdu, cp); nil != ce {
 		err = ce
+	} else if ac, ae := api.NewClient(credential, regions.Chengdu, cp); nil != ae {
+		err = ae
 	} else {
 		tencent.ssl = sc
 		tencent.cdn = cc
+		tencent.api = ac
 	}
 
 	return
@@ -103,6 +108,8 @@ func (t *Tencent) Domains(ctx context.Context) (domains []*core.Domain, err erro
 	domains = make([]*core.Domain, 0, 1)
 	if ce := t.cdnDomains(ctx, &domains); nil != ce {
 		err = ce
+	} else if ae := t.apiDomains(ctx, &domains); nil != ae {
+		err = ae
 	}
 
 	return
@@ -148,16 +155,45 @@ func (t *Tencent) Delete(ctx context.Context, cert *core.ServerCertificate) (del
 func (t *Tencent) cdnDomains(ctx context.Context, domains *[]*core.Domain) (err error) {
 	req := cdn.NewDescribeDomainsRequest()
 	req.Limit = common.Int64Ptr(1000)
-	if rsp, dde := t.cdn.DescribeDomainsWithContext(ctx, req); nil != dde {
-		err = dde
-	} else if 0 != len(rsp.Response.Domains) {
-		for _, brief := range rsp.Response.Domains {
-			domain := new(core.Domain)
-			domain.Id = *brief.ResourceId
-			domain.Name = *brief.Domain
-			domain.Type = core.DomainTypeCdn
+	for page := 0; page < math.MaxInt; page++ {
+		req.Offset = common.Int64Ptr(int64(page) * (*req.Limit))
+		if rsp, dde := t.cdn.DescribeDomainsWithContext(ctx, req); nil != dde {
+			err = dde
+		} else if 0 == len(rsp.Response.Domains) {
+			break
+		} else {
+			for _, brief := range rsp.Response.Domains {
+				domain := new(core.Domain)
+				domain.Id = *brief.ResourceId
+				domain.Name = *brief.Domain
+				domain.Type = core.DomainTypeCdn
 
-			*domains = append(*domains, domain)
+				*domains = append(*domains, domain)
+			}
+		}
+	}
+
+	return
+}
+
+func (t *Tencent) apiDomains(ctx context.Context, domains *[]*core.Domain) (err error) {
+	req := api.NewDescribeServiceSubDomainsRequest()
+	req.Limit = common.Int64Ptr(1000)
+	for page := 0; page < math.MaxInt; page++ {
+		req.Offset = common.Int64Ptr(int64(page) * (*req.Limit))
+		if rsp, dce := t.api.DescribeServiceSubDomainsWithContext(ctx, req); nil != dce {
+			err = dce
+		} else if 0 == len(rsp.Response.Result.DomainSet) {
+			break
+		} else {
+			for _, _domain := range rsp.Response.Result.DomainSet {
+				domain := new(core.Domain)
+				domain.Id = *_domain.DomainName
+				domain.Name = *_domain.DomainName
+				domain.Type = core.DomainTypeGateway
+
+				*domains = append(*domains, domain)
+			}
 		}
 	}
 
