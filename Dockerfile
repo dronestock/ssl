@@ -1,12 +1,12 @@
 FROM dockerproxy.com/neilpang/acme.sh:3.0.7 AS acme
-FROM ccr.ccs.tencentyun.com/storezhang/alpine:3.18.5 AS builder
+FROM ccr.ccs.tencentyun.com/storezhang/alpine:3.19.0 AS builder
 
 COPY --from=acme /root/.acme.sh /docker/opt/neilpang/acme
 COPY ssl /docker/usr/local/bin/
 
 
 
-FROM ccr.ccs.tencentyun.com/storezhang/alpine:3.18.5
+FROM ccr.ccs.tencentyun.com/storezhang/alpine:3.19.0
 
 
 LABEL author="storezhang<华寅>" \
