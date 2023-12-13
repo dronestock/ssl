@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/dronestock/ssl/internal/core"
+	"github.com/dronestock/ssl/internal/internel/internal/core"
 )
 
 type Certificate struct {

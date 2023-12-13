@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/dronestock/drone"
-	"github.com/dronestock/ssl/internal/core"
-	"github.com/dronestock/ssl/internal/feature"
-	"github.com/dronestock/ssl/internal/manufacturer"
+	"github.com/dronestock/ssl/internal/internel/internal/core"
+	"github.com/dronestock/ssl/internal/internel/internal/feature"
+	"github.com/dronestock/ssl/internal/internel/internal/manufacturer"
 	"github.com/goexl/gox"
 	"github.com/goexl/gox/field"
 )
@@ -19,10 +19,10 @@ type Manufacturer struct {
 	Tencent     *core.Tencent     `default:"${TENCENT}" json:"tencent,omitempty"`
 }
 
-func (m *Manufacturer) Refresh(ctx context.Context, base drone.Base, certificate *Certificate) (err error) {
+func (m *Manufacturer) Refresh(ctx context.Context, base *drone.Base, certificate *Certificate) (err error) {
 	refreshers := make([]feature.Refresher, 0, 1)
 	if nil != m.Chuangcache {
-		refreshers = append(refreshers, manufacturer.NewChuangcache())
+		refreshers = append(refreshers, manufacturer.NewChuangcache(base.Http(), m.Chuangcache, base.Logger))
 	}
 	if nil != m.Tencent {
 		if tencent, te := manufacturer.NewTencent(m.Tencent, base.Logger); nil != te {
@@ -49,10 +49,10 @@ func (m *Manufacturer) Refresh(ctx context.Context, base drone.Base, certificate
 	return
 }
 
-func (m *Manufacturer) Clean(ctx context.Context, base drone.Base) (err error) {
+func (m *Manufacturer) Clean(ctx context.Context, base *drone.Base) (err error) {
 	cleaners := make([]feature.Cleaner, 0, 1)
 	if nil != m.Chuangcache {
-		cleaners = append(cleaners, manufacturer.NewChuangcache())
+		cleaners = append(cleaners, manufacturer.NewChuangcache(base.Http(), m.Chuangcache, base.Logger))
 	}
 	if nil != m.Tencent {
 		if tencent, te := manufacturer.NewTencent(m.Tencent, base.Logger); nil != te {
@@ -74,7 +74,7 @@ func (m *Manufacturer) Clean(ctx context.Context, base drone.Base) (err error) {
 
 func (m *Manufacturer) refresh(
 	ctx context.Context,
-	base drone.Base,
+	base *drone.Base,
 	refresher feature.Refresher,
 	local *Certificate,
 ) (err error) {
@@ -101,7 +101,7 @@ func (m *Manufacturer) cleanup(ctx context.Context, cleaner feature.Cleaner) (er
 
 func (m *Manufacturer) upload(
 	ctx context.Context,
-	base drone.Base,
+	base *drone.Base,
 	refresher feature.Refresher,
 	local *core.Certificate,
 ) (cert *core.ServerCertificate, err error) {
@@ -134,7 +134,7 @@ func (m *Manufacturer) deletes(
 
 func (m *Manufacturer) binds(
 	ctx context.Context,
-	base drone.Base,
+	base *drone.Base,
 	refresher feature.Refresher,
 	local *Certificate,
 	certificate *core.ServerCertificate, domains []*core.Domain,
@@ -153,7 +153,7 @@ func (m *Manufacturer) binds(
 
 func (m *Manufacturer) bind(
 	ctx context.Context,
-	base drone.Base,
+	base *drone.Base,
 	wg *sync.WaitGroup,
 	refresher feature.Refresher,
 	cert *core.ServerCertificate, domain *core.Domain,
@@ -180,7 +180,7 @@ func (m *Manufacturer) bind(
 }
 
 func (m *Manufacturer) wait(
-	ctx context.Context, base drone.Base,
+	ctx context.Context, base *drone.Base,
 	refresher feature.Refresher,
 	cert *core.ServerCertificate,
 	record *core.Record,

@@ -6,15 +6,15 @@ import (
 	"math"
 	"time"
 
-	"github.com/dronestock/ssl/internal/chuangcache"
-	"github.com/dronestock/ssl/internal/core"
-	"github.com/dronestock/ssl/internal/feature"
+	"github.com/dronestock/ssl/internal/internel/internal/chuangcache"
+	"github.com/dronestock/ssl/internal/internel/internal/core"
+	"github.com/dronestock/ssl/internal/internel/internal/feature"
 	"github.com/go-resty/resty/v2"
-	"github.com/goexl/exc"
+	"github.com/goexl/exception"
 	"github.com/goexl/gox"
 	"github.com/goexl/gox/field"
 	"github.com/goexl/gox/rand"
-	"github.com/goexl/simaqian"
+	"github.com/goexl/log"
 )
 
 var (
@@ -23,15 +23,20 @@ var (
 )
 
 type Chuangcache struct {
-	simaqian.Logger
-
 	http   *resty.Client
 	config *core.Chuangcache
-	token  *core.Token
+	logger log.Logger
+
+	_token *core.Token
 }
 
-func NewChuangcache() *Chuangcache {
-	return &Chuangcache{}
+func NewChuangcache(http *resty.Client, config *core.Chuangcache, logger log.Logger,
+) *Chuangcache {
+	return &Chuangcache{
+		http:   http,
+		config: config,
+		logger: logger,
+	}
 }
 
 func (c *Chuangcache) Upload(ctx context.Context, local *core.Certificate) (certificate *core.ServerCertificate, err error) {
@@ -65,7 +70,7 @@ func (c *Chuangcache) Bind(
 	if ce := c.call(ctx, url, req, rsp); nil != ce {
 		err = ce
 	} else if !rsp.Data {
-		err = exc.NewFields("绑定证书失败", field.New("req", req), field.New("rsp", rsp))
+		err = exception.New().Message("绑定证书失败").Field(field.New("req", req), field.New("rsp", rsp)).Build()
 	} else {
 		record = new(core.Record)
 		record.Id = rsp.Info
@@ -74,7 +79,7 @@ func (c *Chuangcache) Bind(
 	return
 }
 
-func (c *Chuangcache) Check(ctx context.Context, record *core.Record) (checked bool, err error) {
+func (c *Chuangcache) Check(_ context.Context, _ *core.Record) (checked bool, err error) {
 	return
 }
 
@@ -129,7 +134,7 @@ func (c *Chuangcache) Delete(ctx context.Context, certificate *core.ServerCertif
 	if ce := c.call(ctx, url, req, rsp); nil != ce {
 		err = ce
 	} else if !rsp.Data {
-		err = exc.NewFields("删除证书失败", field.New("req", req), field.New("rsp", rsp))
+		err = exception.New().Message("删除证书失败").Field(field.New("req", req), field.New("rsp", rsp)).Build()
 	}
 
 	return
@@ -146,8 +151,8 @@ func (c *Chuangcache) call(ctx context.Context, url string, req core.TokenSetter
 }
 
 func (c *Chuangcache) getToken(ctx context.Context) (_token string, err error) {
-	if nil != c.token && c.token.Validate() {
-		_token = c.token.Token
+	if nil != c._token && c._token.Validate() {
+		_token = c._token.Token
 	}
 	if "" != _token {
 		return
@@ -160,9 +165,9 @@ func (c *Chuangcache) getToken(ctx context.Context) (_token string, err error) {
 	rsp := new(chuangcache.Response[*chuangcache.TokenRsp])
 	url := fmt.Sprintf("%s/%s", chuangcache.ApiEndpoint, "OAuth/authorize")
 	if err = c.send(ctx, url, req, rsp); nil == err {
-		c.token = new(core.Token)
-		c.token.Token = rsp.Data.AccessToken
-		c.token.Expired = time.Now().Add(time.Duration(1000 * rsp.Data.ExpiresIn))
+		c._token = new(core.Token)
+		c._token.Token = rsp.Data.AccessToken
+		c._token.Expired = time.Now().Add(time.Duration(1000 * rsp.Data.ExpiresIn))
 		_token = rsp.Data.AccessToken
 	}
 
@@ -173,11 +178,11 @@ func (c *Chuangcache) send(ctx context.Context, url string, req any, rsp core.St
 	if hr, pe := c.http.R().SetContext(ctx).SetBody(req).SetResult(rsp).Post(url); nil != pe {
 		err = pe
 	} else if hr.IsError() {
-		c.Warn("创世云返回错误", field.New("status.code", hr.StatusCode()))
+		c.logger.Warn("创世云返回错误", field.New("status.code", hr.StatusCode()))
 	} else if chuangcache.StatusOk != rsp.Code() {
 		status := field.New("status", rsp.Code())
 		info := field.New("info", rsp.Message())
-		err = exc.NewException(rsp.Code(), "创世云操作失败", status, info)
+		err = exception.New().Code(rsp.Code()).Message("创世云操作失败").Field(status, info).Build()
 	}
 
 	return

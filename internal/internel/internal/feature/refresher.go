@@ -3,7 +3,7 @@ package feature
 import (
 	"context"
 
-	"github.com/dronestock/ssl/internal/core"
+	"github.com/dronestock/ssl/internal/internel/internal/core"
 )
 
 type Refresher interface {

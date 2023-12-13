@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/dronestock/ssl/internal/core"
-	"github.com/dronestock/ssl/internal/feature"
-	"github.com/dronestock/ssl/internal/tencent"
-	"github.com/go-resty/resty/v2"
-	"github.com/goexl/exc"
+	"github.com/dronestock/ssl/internal/internel/internal/core"
+	"github.com/dronestock/ssl/internal/internel/internal/feature"
+	"github.com/dronestock/ssl/internal/internel/internal/tencent"
+	"github.com/goexl/exception"
 	"github.com/goexl/gox"
 	"github.com/goexl/gox/field"
-	"github.com/goexl/simaqian"
+	"github.com/goexl/log"
 	api "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/apigateway/v20180808"
 	cdn "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cdn/v20180606"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
@@ -27,17 +26,16 @@ var (
 )
 
 type Tencent struct {
-	simaqian.Logger
+	ssl *ssl.Client
+	cdn *cdn.Client
+	api *api.Client
 
-	http *resty.Client
-	ssl  *ssl.Client
-	cdn  *cdn.Client
-	api  *api.Client
+	logger log.Logger
 }
 
-func NewTencent(config *core.Tencent, logger simaqian.Logger) (tencent *Tencent, err error) {
+func NewTencent(config *core.Tencent, logger log.Logger) (tencent *Tencent, err error) {
 	tencent = new(Tencent)
-	tencent.Logger = logger
+	tencent.logger = logger
 
 	credential := common.NewCredential(config.Id, config.Key)
 	cp := profile.NewClientProfile()
@@ -84,7 +82,7 @@ func (t *Tencent) Bind(
 	if rsp, dce := t.ssl.DeployCertificateInstanceWithContext(ctx, req); nil != dce {
 		err = dce
 	} else if 0 == *rsp.Response.DeployStatus {
-		err = exc.NewFields("绑定证书失败", field.New("req", req), field.New("rsp", rsp))
+		err = exception.New().Message("绑定证书失败").Field(field.New("req", req), field.New("rsp", rsp)).Build()
 	} else {
 		record = new(core.Record)
 		record.Id = gox.ToString(*rsp.Response.DeployRecordId)
@@ -189,7 +187,7 @@ func (t *Tencent) apiDomains(ctx context.Context, domains *[]*core.Domain) (err 
 		} else {
 			for _, service := range rsp.Response.Result.ServiceSet {
 				if fe := t.fetchApiDomains(ctx, service.ServiceId, domains); nil != fe {
-					t.Warn("获取网关域名出错", field.New("service", service), field.Error(fe))
+					t.logger.Warn("获取网关域名出错", field.New("service", service), field.Error(fe))
 				}
 			}
 		}
@@ -233,51 +231,51 @@ func (t *Tencent) invalidate(ctx context.Context, certificate *ssl.Certificates)
 	}
 
 	// 检查内容分发网络
-	t.Info("检查内容分发网络是否有关联证书", fields...)
+	t.logger.Info("检查内容分发网络是否有关联证书", fields...)
 	req.ResourceType = common.StringPtr("cdn")
 	if rsp, dre := t.ssl.DescribeDeployedResourcesWithContext(ctx, req); nil != dre {
 		total += 1
-		t.Warn("检查失效证书出错", field.Error(dre))
+		t.logger.Warn("检查失效证书出错", field.Error(dre))
 	} else {
 		total += t.total(rsp.Response.DeployedResources)
 	}
 
 	// 检查网关
-	t.Info("检查负载均衡是否有关联证书", fields...)
+	t.logger.Info("检查负载均衡是否有关联证书", fields...)
 	req.ResourceType = common.StringPtr("clb")
 	if rsp, dre := t.ssl.DescribeDeployedResourcesWithContext(ctx, req); nil != dre {
 		total += 1
-		t.Warn("检查失效证书出错", field.Error(dre))
+		t.logger.Warn("检查失效证书出错", field.Error(dre))
 	} else {
 		total += t.total(rsp.Response.DeployedResources)
 	}
 
 	// 检查内容分发网络
-	t.Info("检查云直播是否有关联证书", fields...)
+	t.logger.Info("检查云直播是否有关联证书", fields...)
 	req.ResourceType = common.StringPtr("live")
 	if rsp, dre := t.ssl.DescribeDeployedResourcesWithContext(ctx, req); nil != dre {
 		total += 1
-		t.Warn("检查失效证书出错", field.Error(dre))
+		t.logger.Warn("检查失效证书出错", field.Error(dre))
 	} else {
 		total += t.total(rsp.Response.DeployedResources)
 	}
 
 	// 检查内容分发网络
-	t.Info("检查网络防火墙是否有关联证书", fields...)
+	t.logger.Info("检查网络防火墙是否有关联证书", fields...)
 	req.ResourceType = common.StringPtr("waf")
 	if rsp, dre := t.ssl.DescribeDeployedResourcesWithContext(ctx, req); nil != dre {
 		total += 1
-		t.Warn("检查失效证书出错", field.Error(dre))
+		t.logger.Warn("检查失效证书出错", field.Error(dre))
 	} else {
 		total += t.total(rsp.Response.DeployedResources)
 	}
 
 	// 检查内容分发网络
-	t.Info("检查网络攻击是否有关联证书", fields...)
+	t.logger.Info("检查网络攻击是否有关联证书", fields...)
 	req.ResourceType = common.StringPtr("antiddos")
 	if rsp, dre := t.ssl.DescribeDeployedResourcesWithContext(ctx, req); nil != dre {
 		total += 1
-		t.Warn("检查失效证书出错", field.Error(dre))
+		t.logger.Warn("检查失效证书出错", field.Error(dre))
 	} else {
 		total += t.total(rsp.Response.DeployedResources)
 	}
