@@ -39,7 +39,9 @@ func NewChuangcache(http *resty.Client, config *core.Chuangcache, logger log.Log
 	}
 }
 
-func (c *Chuangcache) Upload(ctx context.Context, local *core.Certificate) (certificate *core.ServerCertificate, err error) {
+func (c *Chuangcache) Upload(
+	ctx context.Context, local *core.Certificate,
+) (certificate *core.ServerCertificate, err error) {
 	req := new(chuangcache.UploadReq)
 	// ! 为避免证书名字重复，在证书名字上加上随机字符串
 	req.Title = gox.StringBuilder(local.Title, rand.New().String().Build().Generate()).String()
