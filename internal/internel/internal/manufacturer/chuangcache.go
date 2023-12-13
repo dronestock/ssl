@@ -82,6 +82,8 @@ func (c *Chuangcache) Bind(
 }
 
 func (c *Chuangcache) Check(_ context.Context, _ *core.Record) (checked bool, err error) {
+	checked = true
+
 	return
 }
 
