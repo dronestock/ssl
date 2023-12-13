@@ -175,8 +175,6 @@ func (m *Manufacturer) bind(
 		m.wait(ctx, base, refresher, cert, record)
 		base.Info("绑定证书成功", fields...)
 	}
-
-	return
 }
 
 func (m *Manufacturer) wait(
