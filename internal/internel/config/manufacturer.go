@@ -17,6 +17,7 @@ import (
 type Manufacturer struct {
 	Chuangcache *core.Chuangcache `default:"${CHUANGCACHE}" json:"chuangcache,omitempty"`
 	Tencent     *core.Tencent     `default:"${TENCENT}" json:"tencent,omitempty"`
+	Apisix      *core.Apisix      `default:"${APISIX}" json:"apisix,omitempty"`
 }
 
 func (m *Manufacturer) Refresh(ctx context.Context, base *drone.Base, certificate *Certificate) (err error) {
@@ -30,6 +31,9 @@ func (m *Manufacturer) Refresh(ctx context.Context, base *drone.Base, certificat
 		} else {
 			refreshers = append(refreshers, tencent)
 		}
+	}
+	if nil != m.Apisix {
+		refreshers = append(refreshers, manufacturer.NewApisix(base.Http(), m.Apisix, base.Logger))
 	}
 	if nil != err {
 		return
@@ -60,6 +64,9 @@ func (m *Manufacturer) Clean(ctx context.Context, base *drone.Base) (err error) 
 		} else {
 			cleaners = append(cleaners, tencent)
 		}
+	}
+	if nil != m.Apisix {
+		cleaners = append(cleaners, manufacturer.NewApisix(base.Http(), m.Apisix, base.Logger))
 	}
 	if nil != err {
 		return

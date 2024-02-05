@@ -7,7 +7,7 @@ import (
 
 	"github.com/dronestock/ssl/internal/internel/internal/core"
 	"github.com/dronestock/ssl/internal/internel/internal/feature"
-	"github.com/dronestock/ssl/internal/internel/internal/tencent"
+	tencent2 "github.com/dronestock/ssl/internal/internel/internal/manufacturer/internal/tencent"
 	"github.com/goexl/exception"
 	"github.com/goexl/gox"
 	"github.com/goexl/gox/field"
@@ -55,7 +55,7 @@ func NewTencent(config *core.Tencent, logger log.Logger) (tencent *Tencent, err 
 }
 
 func (t *Tencent) Upload(ctx context.Context, local *core.Certificate) (cert *core.ServerCertificate, err error) {
-	req := tencent.NewUploadReq()
+	req := tencent2.NewUploadReq()
 	req.Alias(local.Title)
 	if le := local.Load(req); nil != le {
 		err = le
@@ -210,7 +210,7 @@ func (t *Tencent) fetchApiDomains(ctx context.Context, id *string, domains *[]*c
 			for _, _domain := range rsp.Response.Result.DomainSet {
 				domain := new(core.Domain)
 				domain.Id = *_domain.DomainName
-				domain.Name = fmt.Sprintf(tencent.GatewayDomainFormatter, *id, *_domain.DomainName)
+				domain.Name = fmt.Sprintf(tencent2.GatewayDomainFormatter, *id, *_domain.DomainName)
 				domain.Type = core.DomainTypeGateway
 
 				*domains = append(*domains, domain)

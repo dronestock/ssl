@@ -6,9 +6,9 @@ import (
 	"math"
 	"time"
 
-	"github.com/dronestock/ssl/internal/internel/internal/chuangcache"
 	"github.com/dronestock/ssl/internal/internel/internal/core"
 	"github.com/dronestock/ssl/internal/internel/internal/feature"
+	"github.com/dronestock/ssl/internal/internel/internal/manufacturer/internal/chuangcache"
 	"github.com/go-resty/resty/v2"
 	"github.com/goexl/exception"
 	"github.com/goexl/gox"
@@ -30,8 +30,7 @@ type Chuangcache struct {
 	_token *core.Token
 }
 
-func NewChuangcache(http *resty.Client, config *core.Chuangcache, logger log.Logger,
-) *Chuangcache {
+func NewChuangcache(http *resty.Client, config *core.Chuangcache, logger log.Logger) *Chuangcache {
 	return &Chuangcache{
 		http:   http,
 		config: config,
