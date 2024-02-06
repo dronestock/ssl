@@ -39,7 +39,7 @@ func NewChuangcache(http *resty.Client, config *core.Chuangcache, logger log.Log
 }
 
 func (c *Chuangcache) Upload(
-	ctx context.Context, local *core.Certificate,
+	ctx *context.Context, local *core.Certificate,
 ) (certificate *core.ServerCertificate, err error) {
 	req := new(chuangcache.UploadReq)
 	// ! 为避免证书名字重复，在证书名字上加上随机字符串
@@ -59,7 +59,7 @@ func (c *Chuangcache) Upload(
 }
 
 func (c *Chuangcache) Bind(
-	ctx context.Context,
+	ctx *context.Context,
 	certificate *core.ServerCertificate,
 	domain *core.Domain,
 ) (record *core.Record, err error) {
@@ -80,13 +80,13 @@ func (c *Chuangcache) Bind(
 	return
 }
 
-func (c *Chuangcache) Check(_ context.Context, _ *core.Record) (checked bool, err error) {
+func (c *Chuangcache) Check(_ *context.Context, _ *core.Record) (checked bool, err error) {
 	checked = true
 
 	return
 }
 
-func (c *Chuangcache) Domains(ctx context.Context) (domains []*core.Domain, err error) {
+func (c *Chuangcache) Domains(ctx *context.Context) (domains []*core.Domain, err error) {
 	req := new(chuangcache.Request)
 	rsp := new(chuangcache.Response[[]*chuangcache.Domain])
 	url := fmt.Sprintf("%s/%s", chuangcache.ApiEndpoint, "Domain/domainList")
@@ -106,7 +106,9 @@ func (c *Chuangcache) Domains(ctx context.Context) (domains []*core.Domain, err 
 	return
 }
 
-func (c *Chuangcache) Invalidates(ctx context.Context) (certificates []*core.ServerCertificate, err error) {
+func (c *Chuangcache) Invalidates(
+	ctx *context.Context, _ *core.Certificate,
+) (certificates []*core.ServerCertificate, err error) {
 	req := new(chuangcache.ListReq)
 	req.PageSize = math.MaxInt
 	req.PageNo = 1
@@ -129,7 +131,7 @@ func (c *Chuangcache) Invalidates(ctx context.Context) (certificates []*core.Ser
 	return
 }
 
-func (c *Chuangcache) Delete(ctx context.Context, certificate *core.ServerCertificate) (deleted bool, err error) {
+func (c *Chuangcache) Delete(ctx *context.Context, certificate *core.ServerCertificate) (err error) {
 	req := new(chuangcache.DeleteReq)
 	req.Key = certificate.Id
 	rsp := new(chuangcache.Response[bool])
@@ -143,7 +145,7 @@ func (c *Chuangcache) Delete(ctx context.Context, certificate *core.ServerCertif
 	return
 }
 
-func (c *Chuangcache) call(ctx context.Context, url string, req core.TokenSetter, rsp core.StatusCoder) (err error) {
+func (c *Chuangcache) call(ctx *context.Context, url string, req core.TokenSetter, rsp core.StatusCoder) (err error) {
 	if _token, te := c.getToken(ctx); nil != te {
 		err = te
 	} else if ce := c.send(ctx, url, req.Token(_token), rsp); nil != ce {
@@ -153,7 +155,7 @@ func (c *Chuangcache) call(ctx context.Context, url string, req core.TokenSetter
 	return
 }
 
-func (c *Chuangcache) getToken(ctx context.Context) (_token string, err error) {
+func (c *Chuangcache) getToken(ctx *context.Context) (_token string, err error) {
 	if nil != c._token && c._token.Validate() {
 		_token = c._token.Token
 	}
@@ -177,8 +179,8 @@ func (c *Chuangcache) getToken(ctx context.Context) (_token string, err error) {
 	return
 }
 
-func (c *Chuangcache) send(ctx context.Context, url string, req any, rsp core.StatusCoder) (err error) {
-	if hr, pe := c.http.R().SetContext(ctx).SetBody(req).SetResult(rsp).Post(url); nil != pe {
+func (c *Chuangcache) send(ctx *context.Context, url string, req any, rsp core.StatusCoder) (err error) {
+	if hr, pe := c.http.R().SetContext(*ctx).SetBody(req).SetResult(rsp).Post(url); nil != pe {
 		err = pe
 	} else if hr.IsError() {
 		c.logger.Warn("创世云返回错误", field.New("status.code", hr.StatusCode()))

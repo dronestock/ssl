@@ -31,9 +31,9 @@ func (c *Cleanup) Runnable() (runnable bool) {
 	return
 }
 
-func (c *Cleanup) Run(ctx context.Context) (err error) {
+func (c *Cleanup) Run(ctx *context.Context) (err error) {
 	for _, certificate := range c.certificates {
-		err = certificate.Clean(ctx, c.base)
+		err = certificate.Clean(ctx, c.base, &certificate.Certificate)
 	}
 
 	return

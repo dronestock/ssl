@@ -54,12 +54,12 @@ func NewTencent(config *core.Tencent, logger log.Logger) (tencent *Tencent, err 
 	return
 }
 
-func (t *Tencent) Upload(ctx context.Context, local *core.Certificate) (cert *core.ServerCertificate, err error) {
+func (t *Tencent) Upload(ctx *context.Context, local *core.Certificate) (cert *core.ServerCertificate, err error) {
 	req := tencent2.NewUploadReq()
 	req.Alias(local.Title)
 	if le := local.Load(req); nil != le {
 		err = le
-	} else if rsp, uce := t.ssl.UploadCertificateWithContext(ctx, req.Request()); nil != uce {
+	} else if rsp, uce := t.ssl.UploadCertificateWithContext(*ctx, req.Request()); nil != uce {
 		err = uce
 	} else {
 		cert = new(core.ServerCertificate)
@@ -71,7 +71,7 @@ func (t *Tencent) Upload(ctx context.Context, local *core.Certificate) (cert *co
 }
 
 func (t *Tencent) Bind(
-	ctx context.Context,
+	ctx *context.Context,
 	cert *core.ServerCertificate,
 	domain *core.Domain,
 ) (record *core.Record, err error) {
@@ -79,7 +79,7 @@ func (t *Tencent) Bind(
 	req.CertificateId = common.StringPtr(cert.Id)
 	req.InstanceIdList = []*string{common.StringPtr(domain.Name)}
 	req.ResourceType = domain.TencentType()
-	if rsp, dce := t.ssl.DeployCertificateInstanceWithContext(ctx, req); nil != dce {
+	if rsp, dce := t.ssl.DeployCertificateInstanceWithContext(*ctx, req); nil != dce {
 		err = dce
 	} else if 0 == *rsp.Response.DeployStatus {
 		err = exception.New().Message("绑定证书失败").Field(field.New("req", req), field.New("rsp", rsp)).Build()
@@ -91,10 +91,10 @@ func (t *Tencent) Bind(
 	return
 }
 
-func (t *Tencent) Check(ctx context.Context, record *core.Record) (checked bool, err error) {
+func (t *Tencent) Check(ctx *context.Context, record *core.Record) (checked bool, err error) {
 	req := ssl.NewDescribeHostDeployRecordDetailRequest()
 	req.DeployRecordId = common.StringPtr(record.Id)
-	if rsp, dce := t.ssl.DescribeHostDeployRecordDetailWithContext(ctx, req); nil != dce {
+	if rsp, dce := t.ssl.DescribeHostDeployRecordDetailWithContext(*ctx, req); nil != dce {
 		err = dce
 	} else {
 		checked = t.checkDeploy(rsp.Response.DeployRecordDetailList)
@@ -103,7 +103,7 @@ func (t *Tencent) Check(ctx context.Context, record *core.Record) (checked bool,
 	return
 }
 
-func (t *Tencent) Domains(ctx context.Context) (domains []*core.Domain, err error) {
+func (t *Tencent) Domains(ctx *context.Context) (domains []*core.Domain, err error) {
 	domains = make([]*core.Domain, 0, 1)
 	if ce := t.cdnDomains(ctx, &domains); nil != ce {
 		err = ce
@@ -114,14 +114,16 @@ func (t *Tencent) Domains(ctx context.Context) (domains []*core.Domain, err erro
 	return
 }
 
-func (t *Tencent) Invalidates(ctx context.Context) (certificates []*core.ServerCertificate, err error) {
+func (t *Tencent) Invalidates(
+	ctx *context.Context, _ *core.Certificate,
+) (certificates []*core.ServerCertificate, err error) {
 	certificates = make([]*core.ServerCertificate, 0, 1)
 	req := ssl.NewDescribeCertificatesRequest()
 	req.Deployable = common.Uint64Ptr(1)
 	req.Limit = common.Uint64Ptr(1000)
 	for page := 0; page < math.MaxInt; page++ {
 		req.Offset = common.Uint64Ptr(uint64(page) * (*req.Limit))
-		if rsp, dce := t.ssl.DescribeCertificatesWithContext(ctx, req); nil != dce {
+		if rsp, dce := t.ssl.DescribeCertificatesWithContext(*ctx, req); nil != dce {
 			err = dce
 		} else if 0 == len(rsp.Response.Certificates) {
 			break
@@ -139,24 +141,24 @@ func (t *Tencent) Invalidates(ctx context.Context) (certificates []*core.ServerC
 	return
 }
 
-func (t *Tencent) Delete(ctx context.Context, cert *core.ServerCertificate) (deleted bool, err error) {
+func (t *Tencent) Delete(ctx *context.Context, cert *core.ServerCertificate) (err error) {
 	req := ssl.NewDeleteCertificateRequest()
 	req.CertificateId = common.StringPtr(cert.Id)
-	if rsp, dce := t.ssl.DeleteCertificateWithContext(ctx, req); nil != dce {
+	if rsp, dce := t.ssl.DeleteCertificateWithContext(*ctx, req); nil != dce {
 		err = dce
-	} else {
-		deleted = *rsp.Response.DeleteResult
+	} else if !*rsp.Response.DeleteResult {
+		err = exception.New().Message("未能删除腾讯云证书").Build()
 	}
 
 	return
 }
 
-func (t *Tencent) cdnDomains(ctx context.Context, domains *[]*core.Domain) (err error) {
+func (t *Tencent) cdnDomains(ctx *context.Context, domains *[]*core.Domain) (err error) {
 	req := cdn.NewDescribeDomainsRequest()
 	req.Limit = common.Int64Ptr(100)
 	for page := 0; page < math.MaxInt; page++ {
 		req.Offset = common.Int64Ptr(int64(page) * (*req.Limit))
-		if rsp, dde := t.cdn.DescribeDomainsWithContext(ctx, req); nil != dde {
+		if rsp, dde := t.cdn.DescribeDomainsWithContext(*ctx, req); nil != dde {
 			err = dde
 		} else if 0 == len(rsp.Response.Domains) {
 			break
@@ -175,12 +177,12 @@ func (t *Tencent) cdnDomains(ctx context.Context, domains *[]*core.Domain) (err 
 	return
 }
 
-func (t *Tencent) apiDomains(ctx context.Context, domains *[]*core.Domain) (err error) {
+func (t *Tencent) apiDomains(ctx *context.Context, domains *[]*core.Domain) (err error) {
 	req := api.NewDescribeServicesStatusRequest()
 	req.Limit = common.Int64Ptr(100)
 	for page := 0; page < math.MaxInt; page++ {
 		req.Offset = common.Int64Ptr(int64(page) * (*req.Limit))
-		if rsp, dce := t.api.DescribeServicesStatusWithContext(ctx, req); nil != dce {
+		if rsp, dce := t.api.DescribeServicesStatusWithContext(*ctx, req); nil != dce {
 			err = dce
 		} else if 0 == len(rsp.Response.Result.ServiceSet) {
 			break
@@ -196,13 +198,13 @@ func (t *Tencent) apiDomains(ctx context.Context, domains *[]*core.Domain) (err 
 	return
 }
 
-func (t *Tencent) fetchApiDomains(ctx context.Context, id *string, domains *[]*core.Domain) (err error) {
+func (t *Tencent) fetchApiDomains(ctx *context.Context, id *string, domains *[]*core.Domain) (err error) {
 	req := api.NewDescribeServiceSubDomainsRequest()
 	req.ServiceId = id
 	req.Limit = common.Int64Ptr(100)
 	for page := 0; page < math.MaxInt; page++ {
 		req.Offset = common.Int64Ptr(int64(page) * (*req.Limit))
-		if rsp, dce := t.api.DescribeServiceSubDomainsWithContext(ctx, req); nil != dce {
+		if rsp, dce := t.api.DescribeServiceSubDomainsWithContext(*ctx, req); nil != dce {
 			err = dce
 		} else if 0 == len(rsp.Response.Result.DomainSet) {
 			break
@@ -221,7 +223,7 @@ func (t *Tencent) fetchApiDomains(ctx context.Context, id *string, domains *[]*c
 	return
 }
 
-func (t *Tencent) invalidate(ctx context.Context, certificate *ssl.Certificates) (invalidate bool) {
+func (t *Tencent) invalidate(ctx *context.Context, certificate *ssl.Certificates) (invalidate bool) {
 	total := 0
 	req := ssl.NewDescribeDeployedResourcesRequest()
 	req.CertificateIds = []*string{certificate.CertificateId}
@@ -233,7 +235,7 @@ func (t *Tencent) invalidate(ctx context.Context, certificate *ssl.Certificates)
 	// 检查内容分发网络
 	t.logger.Info("检查内容分发网络是否有关联证书", fields...)
 	req.ResourceType = common.StringPtr("cdn")
-	if rsp, dre := t.ssl.DescribeDeployedResourcesWithContext(ctx, req); nil != dre {
+	if rsp, dre := t.ssl.DescribeDeployedResourcesWithContext(*ctx, req); nil != dre {
 		total += 1
 		t.logger.Warn("检查失效证书出错", field.Error(dre))
 	} else {
@@ -243,7 +245,7 @@ func (t *Tencent) invalidate(ctx context.Context, certificate *ssl.Certificates)
 	// 检查网关
 	t.logger.Info("检查负载均衡是否有关联证书", fields...)
 	req.ResourceType = common.StringPtr("clb")
-	if rsp, dre := t.ssl.DescribeDeployedResourcesWithContext(ctx, req); nil != dre {
+	if rsp, dre := t.ssl.DescribeDeployedResourcesWithContext(*ctx, req); nil != dre {
 		total += 1
 		t.logger.Warn("检查失效证书出错", field.Error(dre))
 	} else {
@@ -253,7 +255,7 @@ func (t *Tencent) invalidate(ctx context.Context, certificate *ssl.Certificates)
 	// 检查内容分发网络
 	t.logger.Info("检查云直播是否有关联证书", fields...)
 	req.ResourceType = common.StringPtr("live")
-	if rsp, dre := t.ssl.DescribeDeployedResourcesWithContext(ctx, req); nil != dre {
+	if rsp, dre := t.ssl.DescribeDeployedResourcesWithContext(*ctx, req); nil != dre {
 		total += 1
 		t.logger.Warn("检查失效证书出错", field.Error(dre))
 	} else {
@@ -263,7 +265,7 @@ func (t *Tencent) invalidate(ctx context.Context, certificate *ssl.Certificates)
 	// 检查内容分发网络
 	t.logger.Info("检查网络防火墙是否有关联证书", fields...)
 	req.ResourceType = common.StringPtr("waf")
-	if rsp, dre := t.ssl.DescribeDeployedResourcesWithContext(ctx, req); nil != dre {
+	if rsp, dre := t.ssl.DescribeDeployedResourcesWithContext(*ctx, req); nil != dre {
 		total += 1
 		t.logger.Warn("检查失效证书出错", field.Error(dre))
 	} else {
@@ -273,7 +275,7 @@ func (t *Tencent) invalidate(ctx context.Context, certificate *ssl.Certificates)
 	// 检查内容分发网络
 	t.logger.Info("检查网络攻击是否有关联证书", fields...)
 	req.ResourceType = common.StringPtr("antiddos")
-	if rsp, dre := t.ssl.DescribeDeployedResourcesWithContext(ctx, req); nil != dre {
+	if rsp, dre := t.ssl.DescribeDeployedResourcesWithContext(*ctx, req); nil != dre {
 		total += 1
 		t.logger.Warn("检查失效证书出错", field.Error(dre))
 	} else {

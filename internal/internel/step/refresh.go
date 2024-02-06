@@ -31,7 +31,7 @@ func (r *Refresh) Runnable() (runnable bool) {
 	return
 }
 
-func (r *Refresh) Run(ctx context.Context) (err error) {
+func (r *Refresh) Run(ctx *context.Context) (err error) {
 	for _, certificate := range r.certificates {
 		err = certificate.Refresh(ctx, r.base, certificate)
 	}

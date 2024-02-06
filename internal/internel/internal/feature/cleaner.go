@@ -7,7 +7,7 @@ import (
 )
 
 type Cleaner interface {
-	Invalidates(ctx context.Context) (certificates []*core.ServerCertificate, err error)
+	Invalidates(ctx *context.Context, certificate *core.Certificate) (certificates []*core.ServerCertificate, err error)
 
-	Delete(ctx context.Context, certificate *core.ServerCertificate) (deleted bool, err error)
+	Delete(ctx *context.Context, certificate *core.ServerCertificate) (err error)
 }

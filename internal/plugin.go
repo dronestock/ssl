@@ -50,10 +50,10 @@ func (p *plugin) Setup() (err error) {
 
 func (p *plugin) Steps() drone.Steps {
 	return drone.Steps{
-		/*drone.NewStep(step.NewCertificate(
+		drone.NewStep(step.NewCertificate(
 			&p.Base, p.Binary, p.Dir, p.Email, p.Environments, p.Server,
 			p.Certificates,
-		)).Name("证书").Build(),*/
+		)).Name("证书").Build(),
 		drone.NewStep(step.NewRefresh(&p.Base, &p.Manufacturer, p.Certificates)).Name("刷新").Build(),
 		drone.NewStep(step.NewCleanup(&p.Base, &p.Manufacturer, p.Certificates)).Name("清理").Build(),
 	}

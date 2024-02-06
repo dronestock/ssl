@@ -38,4 +38,6 @@ func (ur *UploadReq) Key(key string) {
 	ur.Private = key
 }
 
-func (ur *UploadReq) Chain(_ string) {}
+func (ur *UploadReq) Chain(_ string) {
+	// 空
+}

@@ -1,6 +1,6 @@
 package apisix
 
-type Response struct {
+type Response[T any] struct {
 	Key   string `json:"key,omitempty"`
-	Value any    `json:"value,omitempty"`
+	Value T      `json:"value,omitempty"`
 }

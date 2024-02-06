@@ -26,7 +26,9 @@ func (ur *UploadReq) Key(key string) {
 	ur.request.CertificatePrivateKey = &key
 }
 
-func (ur *UploadReq) Chain(_ string) {}
+func (ur *UploadReq) Chain(_ string) {
+	// 空
+}
 
 func (ur *UploadReq) Alias(alias string) {
 	ur.request.Alias = &alias

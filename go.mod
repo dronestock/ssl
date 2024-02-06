@@ -3,10 +3,10 @@ module github.com/dronestock/ssl
 go 1.21
 
 require (
-	github.com/dronestock/drone v1.0.6
-	github.com/go-resty/resty/v2 v2.10.0
+	github.com/dronestock/drone v1.1.6
+	github.com/go-resty/resty/v2 v2.11.0
 	github.com/goexl/exception v0.0.1
-	github.com/goexl/gox v0.3.8
+	github.com/goexl/gox v0.4.2
 	github.com/goexl/log v0.0.7
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/apigateway v1.0.817
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cdn v1.0.817
@@ -16,11 +16,11 @@ require (
 
 require (
 	github.com/drone/envsubst v1.0.3 // indirect
-	github.com/expr-lang/expr v1.15.7 // indirect
+	github.com/expr-lang/expr v1.15.8 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.16.0 // indirect
+	github.com/go-playground/validator/v10 v10.17.0 // indirect
 	github.com/goexl/baozheng v0.0.1 // indirect
 	github.com/goexl/env v0.0.2 // indirect
 	github.com/goexl/gex v0.3.2 // indirect
@@ -31,8 +31,8 @@ require (
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rs/xid v1.5.0 // indirect
-	golang.org/x/crypto v0.16.0 // indirect
-	golang.org/x/net v0.19.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/crypto v0.18.0 // indirect
+	golang.org/x/net v0.20.0 // indirect
+	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )

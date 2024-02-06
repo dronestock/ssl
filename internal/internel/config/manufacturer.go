@@ -20,7 +20,7 @@ type Manufacturer struct {
 	Apisix      *core.Apisix      `default:"${APISIX}" json:"apisix,omitempty"`
 }
 
-func (m *Manufacturer) Refresh(ctx context.Context, base *drone.Base, certificate *Certificate) (err error) {
+func (m *Manufacturer) Refresh(ctx *context.Context, base *drone.Base, certificate *Certificate) (err error) {
 	refreshers := make([]feature.Refresher, 0, 1)
 	if nil != m.Chuangcache {
 		refreshers = append(refreshers, manufacturer.NewChuangcache(base.Http(), m.Chuangcache, base.Logger))
@@ -40,8 +40,8 @@ func (m *Manufacturer) Refresh(ctx context.Context, base *drone.Base, certificat
 	}
 
 	total := len(refreshers)
-	for _, _refresher := range refreshers {
-		if re := m.refresh(ctx, base, _refresher, certificate); nil != re {
+	for _, refresher := range refreshers {
+		if re := m.refresh(ctx, base, refresher, certificate); nil != re {
 			err = re
 			total++
 		}
@@ -53,7 +53,7 @@ func (m *Manufacturer) Refresh(ctx context.Context, base *drone.Base, certificat
 	return
 }
 
-func (m *Manufacturer) Clean(ctx context.Context, base *drone.Base) (err error) {
+func (m *Manufacturer) Clean(ctx *context.Context, base *drone.Base, certificate *core.Certificate) (err error) {
 	cleaners := make([]feature.Cleaner, 0, 1)
 	if nil != m.Chuangcache {
 		cleaners = append(cleaners, manufacturer.NewChuangcache(base.Http(), m.Chuangcache, base.Logger))
@@ -73,14 +73,14 @@ func (m *Manufacturer) Clean(ctx context.Context, base *drone.Base) (err error) 
 	}
 
 	for _, cleaner := range cleaners {
-		_ = m.cleanup(ctx, cleaner)
+		_ = m.cleanup(ctx, cleaner, certificate)
 	}
 
 	return
 }
 
 func (m *Manufacturer) refresh(
-	ctx context.Context,
+	ctx *context.Context,
 	base *drone.Base,
 	refresher feature.Refresher,
 	local *Certificate,
@@ -96,8 +96,11 @@ func (m *Manufacturer) refresh(
 	return
 }
 
-func (m *Manufacturer) cleanup(ctx context.Context, cleaner feature.Cleaner) (err error) {
-	if certificates, ce := cleaner.Invalidates(ctx); nil != ce {
+func (m *Manufacturer) cleanup(
+	ctx *context.Context,
+	cleaner feature.Cleaner, certificate *core.Certificate,
+) (err error) {
+	if certificates, ce := cleaner.Invalidates(ctx, certificate); nil != ce {
 		err = ce
 	} else {
 		err = m.deletes(ctx, cleaner, certificates)
@@ -107,7 +110,7 @@ func (m *Manufacturer) cleanup(ctx context.Context, cleaner feature.Cleaner) (er
 }
 
 func (m *Manufacturer) upload(
-	ctx context.Context,
+	ctx *context.Context,
 	base *drone.Base,
 	refresher feature.Refresher,
 	local *core.Certificate,
@@ -129,7 +132,7 @@ func (m *Manufacturer) upload(
 }
 
 func (m *Manufacturer) deletes(
-	ctx context.Context, cleaner feature.Cleaner,
+	ctx *context.Context, cleaner feature.Cleaner,
 	certificates []*core.ServerCertificate,
 ) (err error) {
 	for _, certificate := range certificates {
@@ -140,7 +143,7 @@ func (m *Manufacturer) deletes(
 }
 
 func (m *Manufacturer) binds(
-	ctx context.Context,
+	ctx *context.Context,
 	base *drone.Base,
 	refresher feature.Refresher,
 	local *Certificate,
@@ -159,7 +162,7 @@ func (m *Manufacturer) binds(
 }
 
 func (m *Manufacturer) bind(
-	ctx context.Context,
+	ctx *context.Context,
 	base *drone.Base,
 	wg *sync.WaitGroup,
 	refresher feature.Refresher,
@@ -185,7 +188,7 @@ func (m *Manufacturer) bind(
 }
 
 func (m *Manufacturer) wait(
-	ctx context.Context, base *drone.Base,
+	ctx *context.Context, base *drone.Base,
 	refresher feature.Refresher,
 	cert *core.ServerCertificate,
 	record *core.Record,
@@ -211,14 +214,14 @@ func (m *Manufacturer) wait(
 		}
 	}
 }
-func (m *Manufacturer) delete(ctx context.Context, cleaner feature.Cleaner, cert *core.ServerCertificate) (err error) {
+func (m *Manufacturer) delete(ctx *context.Context, cleaner feature.Cleaner, cert *core.ServerCertificate) (err error) {
 	total := 15
 	for times := 0; times < total; times++ {
-		if deleted, de := cleaner.Delete(ctx, cert); nil != de && times < total-1 {
+		if de := cleaner.Delete(ctx, cert); nil != de && times < total-1 {
 			time.Sleep(3 * time.Second)
 		} else if nil != de {
 			err = de
-		} else if deleted {
+		} else {
 			break
 		}
 	}
