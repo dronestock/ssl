@@ -40,7 +40,6 @@ func (a *Apisix) Upload(
 	req := new(apisix.UploadReq)
 	req.Protocols = []string{"TLSv1.1", "TLSv1.2", "TLSv1.3"}
 
-	*ctx = context.WithValue(*ctx, local.SniKey(), []string{"*.itcoursee.com"})
 	domains := (*ctx).Value(local.SniKey())
 	if nil != domains {
 		req.SNIs = domains.([]string)
