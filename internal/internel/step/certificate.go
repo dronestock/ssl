@@ -26,6 +26,7 @@ type Certificate struct {
 	server       string
 	certificates []*config.Certificate
 	aliases      map[string]string
+	prefix       map[string]string
 }
 
 func NewCertificate(base *drone.Base,
@@ -44,6 +45,9 @@ func NewCertificate(base *drone.Base,
 		aliases: map[string]string{
 			"aliyun": "ali",
 			"dnspod": "dp",
+		},
+		prefix: map[string]string{
+			"ali": "Ali",
 		},
 	}
 }
@@ -272,5 +276,11 @@ func (c *Certificate) dns(certificate *config.Certificate) string {
 }
 
 func (c *Certificate) key(certificate *config.Certificate, key string) string {
-	return gox.StringBuilder(strings.ToUpper(c.provider(certificate)), constant.Underline, key).String()
+	provider := c.provider(certificate)
+	prefix := strings.ToUpper(provider)
+	if cached, ok := c.prefix[provider]; ok {
+		prefix = cached
+	}
+
+	return gox.StringBuilder(prefix, constant.Underline, key).String()
 }
