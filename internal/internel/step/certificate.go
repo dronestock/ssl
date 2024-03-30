@@ -149,31 +149,6 @@ func (c *Certificate) makeAcme(_ *context.Context, certificate *config.Certifica
 }
 
 func (c *Certificate) makeSigned(_ *context.Context, certificate *config.Certificate) (err error) {
-	cert := `-----BEGIN CERTIFICATE-----
-MIIEMDCCAxigAwIBAgISBLDiU7O/tJ+LqmGUo+mcY+HzMA0GCSqGSIb3DQEBCwUA
-MDIxCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1MZXQncyBFbmNyeXB0MQswCQYDVQQD
-EwJSMzAeFw0yNDAxMzExNTA5MTdaFw0yNDA0MzAxNTA5MTZaMBoxGDAWBgNVBAMM
-DyouaXRjb3Vyc2VlLmNvbTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABOoqwEMj
-zO/JOQte6jPimBeF2rmalfiLgc0FdogbyH80TKU7RZqsTYz1G1irgDPJmYENbAUh
-39TaHmqm278dzY2jggIhMIICHTAOBgNVHQ8BAf8EBAMCB4AwHQYDVR0lBBYwFAYI
-KwYBBQUHAwEGCCsGAQUFBwMCMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFCDx0pag
-vUU7YpK+zeT2bX/haK2YMB8GA1UdIwQYMBaAFBQusxe3WFbLrlAJQOYfr52LFMLG
-MFUGCCsGAQUFBwEBBEkwRzAhBggrBgEFBQcwAYYVaHR0cDovL3IzLm8ubGVuY3Iu
-b3JnMCIGCCsGAQUFBzAChhZodHRwOi8vcjMuaS5sZW5jci5vcmcvMCkGA1UdEQQi
-MCCCDyouaXRjb3Vyc2VlLmNvbYINaXRjb3Vyc2VlLmNvbTATBgNVHSAEDDAKMAgG
-BmeBDAECATCCAQUGCisGAQQB1nkCBAIEgfYEgfMA8QB3AEiw42vapkc0D+VqAvqd
-MOscUgHLVt0sgdm7v6s52IRzAAABjWBIJusAAAQDAEgwRgIhAKr0cSSdUQMSCM+M
-7KAc2d3lk7cVUPFoXorSQUsbbLwbAiEAty+bxGtxv5h7bPNIYUrAkcS+B1ea1aAh
-eNrpUc+QVwgAdgA7U3d1Pi25gE6LMFsG/kA7Z9hPw/THvQANLXJv4frUFwAAAY1g
-SCboAAAEAwBHMEUCIG1GvTVDAnV3qZSRFysSPFx+NZzhEDMJjFOnRJc/gB3pAiEA
-1v2Tz6lX3ub1mXU7NYUY5S1xMuGmdD2RtRFIeDFNmlowDQYJKoZIhvcNAQELBQAD
-ggEBAHeuARNdbwj8e4nIEwWrIM4XrGUDKxPe4kYMqYE019BF20sn8gNfpdus/ShG
-IbeqHOAXYbqTdsWrRMyEpod1vfx5h//gOemOySH8v2kaiohWqYpKaktSqhGltEKM
-UQ8oO9U31drMVRYLD7kMmsM/nkbY2VSwiWUryIe+F5rQrj7vrg09Obztm7fDER9h
-uclLX126YDnRmEhDa8rxjyIaMPf+FoCxIU5MkUeE5yogNYhdLZxgLbqb4DErWqPS
-kWDX80Y0TUcbELIDEup9+BX1NiJ9Pna/ZzYB2j/KU7Dq7B2mDaJbYKtR5TuOhIul
-uPFfzxrJJdGnTeRJ72Rt3apUFPY=
------END CERTIFICATE-----`
 	key := `-----BEGIN EC PRIVATE KEY-----
 MHcCAQEEIDj4TQ0rDAKGA/sRbus/lXRS01LtKM1BPbB+LZlMW4zZoAoGCCqGSM49
 AwEHoUQDQgAE6irAQyPM78k5C17qM+KYF4XauZqV+IuBzQV2iBvIfzRMpTtFmqxN
@@ -205,12 +180,10 @@ uclLX126YDnRmEhDa8rxjyIaMPf+FoCxIU5MkUeE5yogNYhdLZxgLbqb4DErWqPS
 kWDX80Y0TUcbELIDEup9+BX1NiJ9Pna/ZzYB2j/KU7Dq7B2mDaJbYKtR5TuOhIul
 uPFfzxrJJdGnTeRJ72Rt3apUFPY=
 -----END CERTIFICATE-----`
-	if wee := os.WriteFile(certificate.Cert(), []byte(cert), os.ModePerm); nil != wee {
-		err = wee
-	} else if wke := os.WriteFile(certificate.Key(), []byte(key), os.ModePerm); nil != wke {
+	if wke := os.WriteFile(certificate.Key(), []byte(key), os.ModePerm); nil != wke {
 		err = wke
-	} else if whe := os.WriteFile(certificate.Chain(), []byte(chain), os.ModePerm); nil != whe {
-		err = whe
+	} else if wce := os.WriteFile(certificate.Chain(), []byte(chain), os.ModePerm); nil != wce {
+		err = wce
 	}
 
 	return

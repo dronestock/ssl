@@ -63,9 +63,7 @@ func (c *Certificate) Invalidate(chain string) (invalidate bool, err error) {
 }
 
 func (c *Certificate) Load(loader Loader) (err error) {
-	if ce := c.set(c.Cert(), loader.Cert); nil != ce {
-		err = ce
-	} else if ke := c.set(c.Key(), loader.Key); nil != ke {
+	if ke := c.set(c.Key(), loader.Key); nil != ke {
 		err = ke
 	} else if fe := c.set(c.Chain(), loader.Chain); nil != fe {
 		err = fe

@@ -18,15 +18,13 @@ type (
 	}
 )
 
-func (ur *UploadReq) Cert(cert string) {
-	ur.Content = cert
-}
-
 func (ur *UploadReq) Key(key string) {
 	ur.Private = key
 }
 
-func (ur *UploadReq) Chain(_ string) {}
+func (ur *UploadReq) Chain(chain string) {
+	ur.Content = chain
+}
 
 func (ur *UploadRsp) Code() int {
 	return ur.Status

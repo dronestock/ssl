@@ -18,16 +18,12 @@ func (ur *UploadReq) Request() *ssl.UploadCertificateRequest {
 	return ur.request
 }
 
-func (ur *UploadReq) Cert(cert string) {
-	ur.request.CertificatePublicKey = &cert
-}
-
 func (ur *UploadReq) Key(key string) {
 	ur.request.CertificatePrivateKey = &key
 }
 
-func (ur *UploadReq) Chain(_ string) {
-	// 空
+func (ur *UploadReq) Chain(chain string) {
+	ur.request.CertificatePublicKey = &chain
 }
 
 func (ur *UploadReq) Alias(alias string) {

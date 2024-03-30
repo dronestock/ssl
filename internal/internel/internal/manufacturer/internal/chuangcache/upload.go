@@ -30,14 +30,10 @@ func (ur *UploadReq) Token(token string) (req core.TokenSetter) {
 	return
 }
 
-func (ur *UploadReq) Cert(cert string) {
-	ur.Certificate = cert
-}
-
 func (ur *UploadReq) Key(key string) {
 	ur.Private = key
 }
 
-func (ur *UploadReq) Chain(_ string) {
-	// 空
+func (ur *UploadReq) Chain(chain string) {
+	ur.Certificate = chain
 }
