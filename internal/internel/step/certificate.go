@@ -149,6 +149,7 @@ func (c *Certificate) makeAcme(_ *context.Context, certificate *config.Certifica
 }
 
 func (c *Certificate) makeSigned(_ *context.Context, certificate *config.Certificate) (err error) {
+	// nolint:gosec
 	key := `-----BEGIN EC PRIVATE KEY-----
 MHcCAQEEIDj4TQ0rDAKGA/sRbus/lXRS01LtKM1BPbB+LZlMW4zZoAoGCCqGSM49
 AwEHoUQDQgAE6irAQyPM78k5C17qM+KYF4XauZqV+IuBzQV2iBvIfzRMpTtFmqxN

@@ -8,6 +8,8 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/dronestock/ssl/internal/internel/internal/key"
 )
 
 type Certificate struct {
@@ -24,8 +26,8 @@ type Certificate struct {
 	Id string
 }
 
-func (c *Certificate) SniKey() string {
-	return fmt.Sprintf("%s-sni", c.Id)
+func (c *Certificate) SniKey() key.Sni {
+	return key.Sni(fmt.Sprintf("%s-sni", c.Id))
 }
 
 func (c *Certificate) Match(check *Domain) (matched bool) {

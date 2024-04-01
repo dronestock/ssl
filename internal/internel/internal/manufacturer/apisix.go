@@ -77,7 +77,9 @@ func (a *Apisix) Domains(_ *context.Context) (domains []*core.Domain, err error)
 	return
 }
 
-func (a *Apisix) Invalidates(ctx *context.Context, certificate *core.Certificate) (certificates []*core.ServerCertificate, err error) {
+func (a *Apisix) Invalidates(
+	ctx *context.Context, certificate *core.Certificate,
+) (certificates []*core.ServerCertificate, err error) {
 	req := new(internal.Empty)
 	page := new(apisix.Page[*apisix.Certificate])
 	if ce := a.call(ctx, a.config.Url(), req, page, http.MethodGet); nil != ce {
@@ -120,8 +122,6 @@ func (a *Apisix) invalidates(
 	for _, cert := range certificates {
 		a.invalidate(ctx, cert, certificate, invalidates)
 	}
-
-	return
 }
 
 func (a *Apisix) invalidate(
