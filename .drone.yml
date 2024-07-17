@@ -1,11 +1,4 @@
 kind: secret
-name: token_docker
-get:
-  path: secrets
-  name: token_docker_dronestock
----
-
-kind: secret
 name: password_ccr
 get:
   path: secrets
@@ -20,17 +13,17 @@ get:
 ---
 
 kind: secret
-name: feishu_id
+name: id_feishu
 get:
   path: secrets
-  name: feishu_id
+  name: id_feishu
 ---
 
 kind: secret
-name: feishu_secret
+name: secret_feishu
 get:
   path: secrets
-  name: feishu_secret
+  name: secret_feishu
 ---
 
 
@@ -45,9 +38,10 @@ clone:
 
 environment:
   NAME: ssl
-  OUTPUT_LINUX: ssl.amd64.lin
-  OUTPUT_WINDOWS: ssl.amd64.exe
-  OUTPUT_MAC: ssl.amd64.mac
+  OUTPUT_LINUX_DIR: dist/linux
+  OUTPUT_LINUX_ARM_V7: arm/v7
+  OUTPUT_LINUX_ARM64: arm64
+  OUTPUT_LINUX_AMD64: amd64
   CHANGELOG_TAG_OUTPUT: CHANGELOG.tag.md
 
 
@@ -64,18 +58,16 @@ steps:
         path: /var/lib/go
     settings:
       outputs:
-        - name: $${NAME}
+        - name: $${OUTPUT_LINUX_DIR}/$${OUTPUT_LINUX_AMD64}/$${NAME}
           os: linux
           arch: amd64
-        - name: $${OUTPUT_LINUX}
+        - name: $${OUTPUT_LINUX_DIR}/$${OUTPUT_LINUX_ARM64}/$${NAME}
           os: linux
-          arch: amd64
-        - name: $${OUTPUT_WINDOWS}
-          os: windows
-          arch: amd64
-        - name: $${OUTPUT_MAC}
-          os: darwin
-          arch: amd64
+          arch: arm64
+        - name: $${OUTPUT_LINUX_DIR}/$${OUTPUT_LINUX_ARM_V7}/$${NAME}
+          os: linux
+          arch: arm
+          arm: 7
 
   - name: 推送
     image: ccr.ccs.tencentyun.com/dronestock/docker
@@ -91,13 +83,15 @@ steps:
         from_secret: password_ccr
     settings:
       repository: dronestock/$${NAME}
-      registries:
-        - username: dronestock
-          password: $${PASSWORD_DOCKER}
+      platforms:
+        - arch: amd64
+        - arch: arm64
+        - arch: arm
+          variant: v7
+      registry:
         - hostname: ccr.ccs.tencentyun.com
           username: "160290688"
           password: $${PASSWORD_CCR}
-          required: true
 
   - name: 改变
     image: ccr.ccs.tencentyun.com/dronestock/changelog
@@ -126,11 +120,11 @@ steps:
         body: file('$${CHANGELOG_TAG_OUTPUT}')
         assets:
           - name: $${NAME}-$${VERSION}-linux-amd64
-            file: $${OUTPUT_LINUX}
-          - name: $${NAME}-$${VERSION}-windows-amd64.exe
-            file: $${OUTPUT_WINDOWS}
-          - name: $${NAME}-$${VERSION}-darwin-amd64
-            file: $${OUTPUT_MAC}
+            file: $${OUTPUT_LINUX_DIR}/$${OUTPUT_LINUX_AMD64}/$${NAME}
+          - name: $${NAME}-$${VERSION}-linux-arm64
+            file: $${OUTPUT_LINUX_DIR}/$${OUTPUT_LINUX_ARM64}/$${NAME}
+          - name: $${NAME}-$${VERSION}-linux-armv7
+            file: $${OUTPUT_LINUX_DIR}/$${OUTPUT_LINUX_ARM_V7}/$${NAME}
 
   - name: 通知
     image: ccr.ccs.tencentyun.com/dronestock/feishu
@@ -141,9 +135,11 @@ steps:
         - failure
     settings:
       id:
-        from_secret: feishu_id
+        from_secret: id_feishu
       secret:
-        from_secret: feishu_secret
+        from_secret: secret_feishu
+      notfound:
+        id: storezhang
 
 
 volumes:
