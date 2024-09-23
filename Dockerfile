@@ -1,4 +1,4 @@
-FROM dockerproxy.com/neilpang/acme.sh:3.0.8 AS acme
+FROM dockerproxy.com/neilpang/acme.sh:3.0.9 AS acme
 FROM ccr.ccs.tencentyun.com/storezhang/alpine:3.20.0 AS builder
 
 COPY --from=acme /root/.acme.sh /docker/opt/neilpang/acme
