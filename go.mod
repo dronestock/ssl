@@ -8,7 +8,7 @@ require (
 	github.com/goexl/exception v0.0.1
 	github.com/goexl/gox v0.4.2
 	github.com/goexl/log v0.0.7
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/apigateway v1.0.817
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/apigateway v1.1.0
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cdn v1.3.61
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.78
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ssl v1.3.52
