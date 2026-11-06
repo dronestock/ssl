@@ -10,8 +10,8 @@ require (
 	github.com/goexl/log v0.0.7
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/apigateway v1.3.142
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cdn v1.3.173
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.205
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ssl v1.3.147
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.206
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ssl v1.3.206
 )
 
 require (
